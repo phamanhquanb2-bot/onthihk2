@@ -22,7 +22,7 @@
     </style>
 </head>
 <body>
-    <h1>CHECK VẬT LÍ 8 - VÍT GA TÍCH ĐIỂM 🚀</h1>
+    <h1>CHECK VẬT LÍ 8 </h1>
     <div class="wallet-bar">💰 Tài khoản: <span id="user-points-display">0</span> ⭐</div>
     <div id="quiz-container"></div>
     <button class="btn-submit" onclick="showResults()">CHẤM ĐIỂM NGAY</button>
@@ -110,7 +110,7 @@
             res.style.display = 'block'; 
             res.style.color = (score === total) ? "#00ff88" : (score >= 5 ? "#ffcc00" : "#da3633");
             res.style.border = `2px solid ${res.style.color}`;
-            res.innerText = `KẾT QUẢ: ${score}/${total}. ${score === total ? 'FULL OPTION! 🏆' : (score >= 5 ? 'Cũng tạm' : '3 sọc óc chó')}`;
+            res.innerText = `KẾT QUẢ: ${score}/${total}. ${score === total ? 'FULL OPTION! 🏆' : (score >= 5 ? 'Cũng tạm' : 'cần cố gắng hơn')}`;
             window.scrollTo(0, document.body.scrollHeight);
         }
         window.onload = initQuiz;
