@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vật Lý 8 - Point System Pro 🚀</title>
+    <style>
+        :root { --primary: #00ff88; --bg: #0b0e14; --card: #161b22; --text: #e6edf3; --accent: #ffcc00; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); max-width: 800px; margin: auto; padding: 20px; }
+        h1 { text-align: center; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 10px; text-transform: uppercase; }
+        .wallet-bar { background: var(--card); padding: 10px 20px; border-radius: 50px; border: 1px solid var(--primary); display: block; margin: 0 auto 20px auto; width: fit-content; font-weight: bold; color: var(--primary); }
+        .question-card { background: var(--card); padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #30363d; }
+        .options { display: grid; gap: 10px; margin-top: 15px; }
+        button.option { background: #21262d; color: var(--text); border: 1px solid #30363d; padding: 12px; border-radius: 6px; cursor: pointer; text-align: left; transition: 0.2s; }
+        button.option:hover:not(:disabled) { border-color: var(--primary); background: #30363d; }
+        .correct { background: #238636 !important; border-color: #2ea043 !important; }
+        .wrong { background: #da3633 !important; border-color: #f85149 !important; }
+        .revive-btn { background: var(--accent); color: #000; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
+        .btn-submit { width: 100%; padding: 15px; background: var(--primary); color: #000; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px; font-size: 1.1em; }
+        #result { text-align: center; font-size: 1.5em; color: var(--primary); margin-top: 20px; display: none; font-weight: bold; padding: 20px; border-radius: 15px; background: rgba(0,0,0,0.3); }
+        .back-link { display: block; text-align: center; margin-top: 20px; color: var(--primary); text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>CHECK VẬT LÍ 8 - VÍT GA TÍCH ĐIỂM 🚀</h1>
+    <div class="wallet-bar">💰 Tài khoản: <span id="user-points-display">0</span> ⭐</div>
+    <div id="quiz-container"></div>
+    <button class="btn-submit" onclick="showResults()">CHẤM ĐIỂM NGAY</button>
+    <div id="result"></div>
+    <a href="index.html" class="back-link">⬅️ Quay lại Sảnh chính</a>
+
+    <script>
+        let userData = JSON.parse(localStorage.getItem('quan_phap_su_data')) || { points: 0, lastCheckIn: null };
+        let answeredCount = 0, bonusReceived = false, cheatCount = 0, isFinished = false;
+
+        const rawData = [
+            { q: "Dụng cụ hoạt động dựa trên tác dụng nhiệt của dòng điện?", a: ["Bàn là điện", "Chuông điện", "Máy mạ vàng", "Đèn LED"], c: "Bàn là điện" },
+            { q: "Tác dụng hóa học ứng dụng rõ rệt nhất trong?", a: ["Mạ kim loại", "Thắp sáng đèn", "Nam châm điện", "Quạt điện"], c: "Mạ kim loại" },
+            { q: "Dòng điện gây co cơ là tác dụng gì?", a: ["Tác dụng sinh lí", "Tác dụng nhiệt", "Tác dụng hóa học", "Tác dụng từ"], c: "Tác dụng sinh lí" },
+            { q: "Mạ bạc cho nhẫn đồng, nhẫn nối với cực nào?", a: ["Cực âm", "Cực dương", "Cực bất kỳ", "Không cần nối"], c: "Cực âm" },
+            { q: "Đèn LED chỉ cho dòng điện đi qua theo?", a: ["Một chiều nhất định", "Hai chiều", "Chiều nào cũng được", "Khi dòng điện mạnh"], c: "Một chiều nhất định" },
+            { q: "Ampe kế dùng để đo đại lượng nào?", a: ["Cường độ dòng điện", "Hiệu điện thế", "Điện tích", "Công suất"], c: "Cường độ dòng điện" },
+            { q: "Đơn vị của hiệu điện thế là?", a: ["Vôn (V)", "Ampe (A)", "Ôm (Ω)", "Oát (W)"], c: "Vôn (V)" },
+            { q: "Chốt dương ampe kế mắc về phía?", a: ["Cực dương của nguồn", "Cực âm của nguồn", "Hai đầu bóng đèn", "Bất kỳ"], c: "Cực dương của nguồn" },
+            { q: "Vôn kế đo hiệu điện thế bóng đèn phải mắc?", a: ["Song song với đèn", "Nối tiếp với đèn", "Mắc bất kỳ", "Mắc vào nguồn hở"], c: "Song song với đèn" },
+            { q: "Nhiệt độ càng cao, phân tử chuyển động?", a: ["Càng nhanh", "Càng chậm", "Không đổi", "Dừng lại"], c: "Càng nhanh" },
+            { q: "Truyền nhiệt chủ yếu trong chất rắn là?", a: ["Dẫn nhiệt", "Đối lưu", "Bức xạ nhiệt", "Khuyếch tán"], c: "Dẫn nhiệt" },
+            { q: "Đối lưu là truyền nhiệt chủ yếu của?", a: ["Chất lỏng và khí", "Chất rắn", "Chất lỏng và rắn", "Chân không"], c: "Chất lỏng và khí" },
+            { q: "Nhiệt Mặt Trời truyền tới Trái Đất bằng?", a: ["Bức xạ nhiệt", "Dẫn nhiệt", "Đối lưu", "Tiếp xúc"], c: "Bức xạ nhiệt" },
+            { q: "Dây đun ấm điện đặt ở đáy để?", a: ["Tạo dòng đối lưu", "Dẫn nhiệt tốt", "Tiết kiệm điện", "Đẹp"], c: "Tạo dòng đối lưu" },
+            { q: "Nguyên nhân chính gây hiệu ứng nhà kính?", a: ["Khí CO2", "Khí O2", "Khí N2", "Khí H2"], c: "Khí CO2" }
+        ];
+
+        function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
+        function save() { localStorage.setItem('quan_phap_su_data', JSON.stringify(userData)); document.getElementById('user-points-display').innerText = userData.points; }
+
+        function initQuiz() {
+            const container = document.getElementById('quiz-container'); container.innerHTML = "";
+            const currentQuestions = shuffle([...rawData]).slice(0, 15);
+            currentQuestions.forEach((item, idx) => {
+                const card = document.createElement('div'); card.className = 'question-card';
+                const opts = shuffle([...item.a]);
+                const optDiv = document.createElement('div'); optDiv.className = 'options';
+                opts.forEach((opt, i) => {
+                    const btn = document.createElement('button'); btn.className = 'option';
+                    btn.innerText = `${String.fromCharCode(65 + i)}. ${opt}`;
+                    btn.onclick = () => check(btn, opt, item.c, optDiv);
+                    optDiv.appendChild(btn);
+                });
+                card.innerHTML = `<h3>Câu ${idx + 1}: ${item.q}</h3>`; card.appendChild(optDiv); container.appendChild(card);
+            });
+            save(); activateSuperVision();
+        }
+
+        function check(btn, selected, correct, container) {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e => {});
+            container.querySelectorAll('button').forEach(b => b.disabled = true);
+            answeredCount++;
+            if (answeredCount === 5 && !bonusReceived) { userData.points += 10; bonusReceived = true; alert("🔥 CHUYÊN CẦN: +10đ!"); save(); }
+            if (selected === correct) { btn.classList.add('correct'); userData.points += 2; save(); }
+            else {
+                btn.classList.add('wrong');
+                if (userData.points >= 50) {
+                    const rb = document.createElement('button'); rb.className = 'revive-btn'; rb.innerText = "🆘 Hồi sinh (50đ)";
+                    rb.onclick = () => { userData.points -= 50; save(); container.querySelectorAll('button').forEach(b => { b.disabled = false; b.classList.remove('wrong'); }); rb.remove(); };
+                    container.appendChild(rb);
+                }
+            }
+        }
+
+        function triggerPunishment(reason) {
+            cheatCount++;
+            if (cheatCount === 1) alert(`⚠️ CẢNH CÁO: ${reason}!`);
+            else {
+                userData.points = 0; localStorage.setItem('quan_phap_su_data', JSON.stringify(userData));
+                document.body.innerHTML = `<div style="background:#da3633; color:#fff; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px;"><h1>🚫 RESET ĐIỂM</h1><p>Gian lận: ${reason}.</p><button onclick="location.href='index.html'" style="padding:15px;">QUAY VỀ</button></div>`;
+            }
+        }
+
+        function activateSuperVision() {
+            document.addEventListener("visibilitychange", () => { if (document.hidden && !isFinished) triggerPunishment("Chuyển tab"); });
+            document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && !isFinished) triggerPunishment("Thoát F11"); });
+        }
+
+        function showResults() {
+            isFinished = true; if (document.fullscreenElement) document.exitFullscreen();
+            const res = document.getElementById('result');
+            const score = document.querySelectorAll('.correct').length;
+            const total = 15;
+            res.style.display = 'block'; 
+            res.style.color = (score === total) ? "#00ff88" : (score >= 5 ? "#ffcc00" : "#da3633");
+            res.style.border = `2px solid ${res.style.color}`;
+            res.innerText = `KẾT QUẢ: ${score}/${total}. ${score === total ? 'FULL OPTION! 🏆' : (score >= 5 ? 'Cũng tạm' : '3 sọc óc chó')}`;
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+        window.onload = initQuiz;
+    </script>
+</body>
+</html>

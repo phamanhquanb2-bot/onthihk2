@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sử 8 - Check Var HKII 🚀</title>
+    <style>
+        :root { --primary: #ffcc00; --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --success: #00ff88; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); max-width: 850px; margin: auto; padding: 20px; }
+        h1 { text-align: center; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 10px; text-transform: uppercase; }
+        .wallet-bar { background: var(--card); padding: 10px 20px; border-radius: 50px; border: 1px solid var(--success); display: inline-block; margin-bottom: 20px; font-weight: bold; color: var(--success); }
+        .question-card { background: var(--card); padding: 20px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #30363d; }
+        .options { display: grid; gap: 10px; margin-top: 15px; }
+        button.option { background: #21262d; color: var(--text); border: 1px solid #30363d; padding: 12px; border-radius: 6px; cursor: pointer; text-align: left; transition: 0.2s; }
+        button.option:hover:not(:disabled) { border-color: var(--primary); background: #30363d; }
+        .correct { background: #238636 !important; }
+        .wrong { background: #da3633 !important; }
+        .revive-btn { background: var(--primary); color: #000; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
+        .btn-submit { width: 100%; padding: 15px; background: var(--primary); color: #000; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 1.1em; margin-top: 20px; }
+        #result { text-align: center; font-size: 1.5em; margin-top: 20px; display: none; font-weight: bold; padding: 20px; border-radius: 15px; background: rgba(0,0,0,0.3); }
+        .back-link { display: block; text-align: center; margin-top: 20px; color: var(--primary); text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>CHECK SỬ 8</h1>
+    <center><div class="wallet-bar">💰 Tài khoản: <span id="user-points-display">0</span> ⭐</div></center>
+    <div id="quiz-content"></div>
+    <button class="btn-submit" onclick="showResults()">CHẤM ĐIỂM </button>
+    <div id="result"></div>
+    <a href="index.html" class="back-link">⬅️ Quay lại Sảnh chính</a>
+
+    <script>
+        let userData = JSON.parse(localStorage.getItem('quan_phap_su_data')) || { points: 0, lastCheckIn: null };
+        let answeredCount = 0, bonusReceived = false, cheatCount = 0, isFinished = false;
+
+        const questions = [
+            { q: "Thành tựu văn hóa nào thời Nguyễn được UNESCO công nhận là Di sản Thế giới?", a: ["Cố đô Huế", "Thành nhà Hồ", "Chùa Một Cột", "Vịnh Hạ Long"], c: "Cố đô Huế" },
+            { q: "Nguyên nhân thực dân Pháp xâm lược Việt Nam là gì?", a: ["Nhu cầu thị trường, nguyên liệu", "Bảo vệ đạo Thiên Chúa", "Giúp nhà Nguyễn", "Nhà Nguyễn khiêu khích"], c: "Nhu cầu thị trường, nguyên liệu" },
+            { q: "Bản hiệp ước nào triều đình Nguyễn chính thức thừa nhận quyền cai trị của Pháp?", a: ["Hiệp ước Pa-tơ-nốt", "Hiệp ước Nhâm Tuất", "Hiệp ước Giáp Tuất", "Hiệp ước Hắc-măng"], c: "Hiệp ước Pa-tơ-nốt" },
+            { q: "Ai là người nhân danh vua Hàm Nghi ra 'Chiếu Cần vương'?", a: ["Tôn Thất Thuyết", "Phan Đình Phùng", "Hoàng Hoa Thám", "Nguyễn Thiện Thuật"], c: "Tôn Thất Thuyết" },
+            { q: "Cuộc khởi nghĩa nào tiêu biểu nhất trong phong trào Cần vương?", a: ["Khởi nghĩa Hương Khê", "Khởi nghĩa Bãi Sậy", "Khởi nghĩa Ba Đình", "Khởi nghĩa Yên Thế"], c: "Khởi nghĩa Hương Khê" },
+            { q: "Hành trình tìm đường cứu nước của Nguyễn Tất Thành bắt đầu từ đâu?", a: ["Bến cảng Nhà Rồng", "Huế", "Nghệ An", "Pháp"], c: "Bến cảng Nhà Rồng" },
+            { q: "Sự kiện thế giới nào năm 1917 ảnh hưởng lớn đến Nguyễn Tất Thành?", a: ["Cách mạng tháng Mười Nga", "Chiến tranh TG thứ nhất", "Cách mạng Tân Hợi", "Quốc tế Cộng sản"], c: "Cách mạng tháng Mười Nga" },
+            { q: "Chủ trương của Phan Bội Châu đầu thế kỉ XX là gì?", a: ["Bạo động vũ trang", "Cải cách ôn hòa", "Dựa vào triều đình", "Bỏ qua học tập nước ngoài"], c: "Bạo động vũ trang" },
+            { q: "Chủ trương của Phan Châu Trinh là gì?", a: ["Cải cách, nâng cao dân trí", "Bạo động vũ trang", "Dựa vào Nhật Bản", "Dựa vào nhà Thanh"], c: "Cải cách, nâng cao dân trí" },
+            { q: "Cuộc khởi nghĩa Yên Thế kéo dài bao nhiêu năm?", a: ["Gần 30 năm", "11 năm", "5 năm", "20 năm"], c: "Gần 30 năm" },
+            { q: "Mục tiêu của phong trào Cần Vương là gì?", a: ["Giúp vua cứu nước", "Lập nền dân chủ", "Bảo vệ ruộng đất nông dân", "Thoát khỏi triều đình"], c: "Giúp vua cứu nước" },
+            { q: "Phan Bội Châu lập tổ chức nào để thực hiện phong trào Đông du?", a: ["Duy tân hội", "Việt Nam Quang phục hội", "Việt Nam Quốc dân Đảng", "Hội Phục Việt"], c: "Duy tân hội" },
+            { q: "Nguyễn Tất Thành ra đi tìm đường cứu nước vào ngày nào?", a: ["5/6/1911", "19/5/1890", "3/2/1930", "2/9/1945"], c: "5/6/1911" },
+            { q: "Việc kí các hiệp ước đầu hàng nói lên điều gì về triều đình Nguyễn?", a: ["Bạc nhược, vì lợi ích dòng họ", "Yêu nước thương dân", "Mạnh mẽ chống Pháp", "Thông minh trong ngoại giao"], c: "Bạc nhược, vì lợi ích dòng họ" },
+            { q: "Lãnh đạo khởi nghĩa Yên Thế là ai?", a: ["Hoàng Hoa Thám", "Phan Đình Phùng", "Tôn Thất Thuyết", "Nguyễn Thiện Thuật"], c: "Hoàng Hoa Thám" },
+            { q: "Kết quả của phong trào Cần vương là gì?", a: ["Thất bại", "Thành công rực rỡ", "Pháp rút quân", "Thành lập nước dân chủ"], c: "Thất bại" },
+            { q: "Thành tựu văn hóa nào nhà Nguyễn vẫn tồn tại đến nay?", a: ["Nhã nhạc cung đình Huế", "Áo dài (phát triển từ thời Nguyễn)", "Văn Miếu - Quốc Tử Giám", "Cả A và B"], c: "Cả A và B" },
+            { q: "Cuộc khởi nghĩa Hương Khê diễn ra chủ yếu ở đâu?", a: ["Hà Tĩnh", "Yên Thế", "Hải Phòng", "Thanh Hóa"], c: "Hà Tĩnh" },
+            { q: "Nguyễn Tất Thành ở Pháp trong khoảng thời gian nào?", a: ["1911-1917", "1917-1923", "1923-1930", "1941-1945"], c: "1911-1917" },
+            { q: "Tư tưởng của Phan Châu Trinh tóm gọn trong cụm từ nào?", a: ["Khai dân trí, chấn dân khí", "Bạo động giành độc lập", "Phò vua giúp nước", "Cách mạng vô sản"], c: "Khai dân trí, chấn dân khí" }
+        ];
+
+        function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
+        function save() { localStorage.setItem('quan_phap_su_data', JSON.stringify(userData)); document.getElementById('user-points-display').innerText = userData.points; }
+
+        function initQuiz() {
+            const container = document.getElementById('quiz-content');
+            container.innerHTML = "";
+            const selected = shuffle([...questions]).slice(0, 15);
+            selected.forEach((item, idx) => {
+                const card = document.createElement('div');
+                card.className = 'question-card';
+                card.innerHTML = `<h3>Câu ${idx + 1}: ${item.q}</h3>`;
+                const options = shuffle([...item.a]);
+                const optDiv = document.createElement('div');
+                optDiv.className = 'options';
+                options.forEach((opt, i) => {
+                    const btn = document.createElement('button'); btn.className = 'option';
+                    btn.innerText = `${String.fromCharCode(65 + i)}. ${opt}`;
+                    btn.onclick = () => check(btn, opt, item.c, optDiv);
+                    optDiv.appendChild(btn);
+                });
+                card.appendChild(optDiv);
+                container.appendChild(card);
+            });
+            save(); activateSuperVision();
+        }
+
+        function check(btn, sel, cor, container) {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e => {});
+            container.querySelectorAll('button').forEach(b => b.disabled = true);
+            answeredCount++;
+            if (answeredCount === 5 && !bonusReceived) { userData.points += 10; bonusReceived = true; alert("🔥 CHUYÊN CẦN: +10đ!"); save(); }
+            if (sel === cor) { btn.classList.add('correct'); userData.points += 2; save(); }
+            else {
+                btn.classList.add('wrong');
+                if (userData.points >= 50) {
+                    const rb = document.createElement('button'); rb.className = 'revive-btn'; rb.innerText = "🆘 Hồi sinh (50đ)";
+                    rb.onclick = () => { userData.points -= 50; save(); container.querySelectorAll('button').forEach(b => { b.disabled = false; b.classList.remove('wrong'); }); rb.remove(); };
+                    container.appendChild(rb);
+                }
+            }
+        }
+
+        function triggerPunishment(reason) {
+            cheatCount++;
+            if (cheatCount === 1) alert(`⚠️ CẢNH CÁO: ${reason}! Đừng làm thế nữa.`);
+            else {
+                userData.points = 0; localStorage.setItem('quan_phap_su_data', JSON.stringify(userData));
+                document.body.innerHTML = `<div style="background:#da3633; color:#fff; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px;"><h1>🚫 ĐÃ RESET TÀI KHOẢN</h1><p>Phát hiện gian lận: ${reason}.</p><button onclick="location.href='index.html'" style="padding:15px;">QUAY VỀ SẢNH CHÍNH</button></div>`;
+            }
+        }
+
+        function activateSuperVision() {
+            document.addEventListener("visibilitychange", () => { if (document.hidden && !isFinished) triggerPunishment("Chuyển tab"); });
+            document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && !isFinished) triggerPunishment("Thoát F11"); });
+        }
+
+        function showResults() {
+            isFinished = true; if (document.fullscreenElement) document.exitFullscreen();
+            const res = document.getElementById('result');
+            const score = document.querySelectorAll('.correct').length;
+            const total = 15;
+            let msg = ""; let color = "";
+            if (score < 5) { msg = "lũ 3 sọc óc chó"; color = "#da3633"; } 
+            else if (score < 15) { msg = "cũng tạm"; color = "#ffcc00"; } 
+            else { msg = "đúng là người Việt Nam!"; color = "#00ff88"; }
+            res.style.display = 'block'; res.style.color = color; res.style.border = `2px solid ${color}`;
+            res.innerText = `KẾT QUẢ: ${score}/${total}. ${msg}`;
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+        window.onload = initQuiz;
+    </script>
+</body>
+</html>

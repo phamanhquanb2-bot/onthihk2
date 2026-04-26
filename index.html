@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Ôn Thi Pro</title>
+    <style>
+        :root { --primary: #00ff88; --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --accent: #ffcc00; }
+        body.light-mode { --bg: #f0f2f5; --card: #ffffff; --text: #1c1e21; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; transition: 0.3s; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        
+        /* Cụm nút chức năng */
+        .top-btns { position: fixed; top: 15px; right: 15px; display: flex; flex-direction: row-reverse; gap: 10px; z-index: 9999; }
+        .icon-btn { background: var(--card); border: 2px solid var(--primary); color: var(--primary); padding: 8px 15px; border-radius: 50px; cursor: pointer; font-weight: bold; box-shadow: 0 0 15px rgba(0,255,136,0.3); display: flex; align-items: center; justify-content: center; min-width: 45px; height: 45px; }
+
+        .container { text-align: center; width: 90%; max-width: 800px; margin-top: 100px; }
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 30px; }
+        .nav-card { background: var(--card); border: 1px solid #30363d; padding: 30px; border-radius: 15px; text-decoration: none; color: var(--text); font-weight: bold; transition: 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .nav-card:hover { border-color: var(--primary); transform: translateY(-5px); background: rgba(0,255,136,0.05); }
+
+        /* Bảng nhập tên */
+        #name-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 10001; display: flex; justify-content: center; align-items: center; }
+        .name-box { background: var(--card); padding: 40px; border-radius: 20px; border: 2px solid var(--primary); text-align: center; width: 320px; }
+        .name-input { padding: 12px; width: 220px; border-radius: 8px; border: 1px solid var(--primary); background: #000; color: #fff; text-align: center; margin-bottom: 20px; }
+        .btn-start { padding: 12px 35px; background: var(--primary); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: #000; }
+
+        /* Modal Cài đặt */
+        #settings-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 10000; }
+        .settings-box { background: var(--card); padding: 25px; border-radius: 15px; border: 2px solid var(--primary); width: 280px; }
+    </style>
+</head>
+<body>
+
+    <div id="name-overlay">
+        <div class="name-box">
+            <h2 id="lang-name-title">XÁC ĐỊNH DANH TÍNH</h2>
+            <input type="text" id="user-name-input" class="name-input" placeholder="Tên của ông...">
+            <br>
+            <button onclick="saveName()" class="btn-start">BẮT ĐẦU</button>
+        </div>
+    </div>
+
+    <div class="top-btns">
+        <button class="icon-btn" onclick="toggleSettings()">⚙️</button>
+        <button class="icon-btn" style="min-width: 80px;">💰 <span id="side-points">0</span></button>
+    </div>
+
+    <div id="settings-modal" onclick="if(event.target==this) toggleSettings()">
+        <div class="settings-box">
+            <h2 id="lang-set-title" style="color: var(--primary); margin-top: 0;">Cài Đặt</h2>
+            <div style="margin-bottom: 15px; display: flex; justify-content: space-between;">
+                <span id="lang-theme">Giao diện:</span>
+                <select id="theme-select" onchange="applySettings()"><option value="dark">Tối</option><option value="light">Sáng</option></select>
+            </div>
+            <div style="margin-bottom: 15px; display: flex; justify-content: space-between;">
+                <span id="lang-mode">Ngôn ngữ:</span>
+                <select id="lang-select" onchange="applySettings()"><option value="vi">Tiếng Việt</option><option value="en">English</option></select>
+            </div>
+            <button onclick="toggleSettings()" style="width:100%; padding:10px; background:var(--primary); border:none; border-radius:8px; font-weight:bold; cursor:pointer;">LƯU</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1 id="lang-main-title">🚀 TRẠM ÔN THI HKII</h1>
+        <div style="color: var(--accent); margin-bottom: 20px;">Chào ông, <span id="user-name">...</span>!</div>
+        <div class="menu-grid">
+            <a href="english quiz.html" class="nav-card"><span>🇬🇧</span><span>ENGLISH 8</span></a>
+            <a href="history quiz.html" class="nav-card"><span>📜</span><span>HISTORY 8</span></a>
+            <a href="vatly quiz.html" class="nav-card"><span>⚡</span><span>PHYSICS 8</span></a>
+            <a href="#" class="nav-card" onclick="alert('Updating...')"><span>✍️</span><span>VĂN 8</span></a>
+        </div>
+    </div>
+
+    <script>
+        // Hàm khởi tạo dữ liệu an toàn
+        function getInitialData() {
+            const saved = localStorage.getItem('quan_phap_su_data');
+            try {
+                const parsed = JSON.parse(saved);
+                // Nếu có dữ liệu nhưng thiếu settings thì bù vào
+                if (parsed && !parsed.settings) {
+                    parsed.settings = { theme: 'dark', lang: 'vi' };
+                }
+                return parsed || { points: 0, userName: null, settings: { theme: 'dark', lang: 'vi' } };
+            } catch (e) {
+                return { points: 0, userName: null, settings: { theme: 'dark', lang: 'vi' } };
+            }
+        }
+
+        let userData = getInitialData();
+
+        function saveName() {
+            const name = document.getElementById('user-name-input').value.trim();
+            if (name) {
+                userData.userName = name;
+                updateUI();
+            } else { alert("Nhập tên đã ông ơi!"); }
+        }
+
+        function toggleSettings() {
+            const modal = document.getElementById('settings-modal');
+            modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        function applySettings() {
+            userData.settings.theme = document.getElementById('theme-select').value;
+            userData.settings.lang = document.getElementById('lang-select').value;
+            updateUI();
+        }
+
+        function updateUI() {
+            // Fix lỗi undefined 'theme' tận gốc
+            const theme = (userData.settings && userData.settings.theme) ? userData.settings.theme : 'dark';
+            document.body.className = theme + '-mode';
+            
+            const lang = (userData.settings && userData.settings.lang) ? userData.settings.lang : 'vi';
+            const texts = {
+                vi: { title: "🚀 TRẠM ÔN THI HKII", set: "Cài Đặt", theme: "Giao diện:", mode: "Ngôn ngữ:", name: "XÁC ĐỊNH DANH TÍNH" },
+                en: { title: "🚀 EXAM STATION HKII", set: "Settings", theme: "Theme:", mode: "Language:", name: "IDENTIFY YOURSELF" }
+            };
+            
+            document.getElementById('lang-main-title').innerText = texts[lang].title;
+            document.getElementById('lang-set-title').innerText = texts[lang].set;
+            document.getElementById('lang-theme').innerText = texts[lang].theme;
+            document.getElementById('lang-mode').innerText = texts[lang].mode;
+            document.getElementById('lang-name-title').innerText = texts[lang].name;
+
+            if (userData.userName) {
+                document.getElementById('name-overlay').style.display = 'none';
+                document.getElementById('user-name').innerText = userData.userName;
+            }
+            
+            document.getElementById('side-points').innerText = userData.points;
+            localStorage.setItem('quan_phap_su_data', JSON.stringify(userData));
+        }
+
+        window.onload = updateUI;
+    </script>
+</body>
+</html>
