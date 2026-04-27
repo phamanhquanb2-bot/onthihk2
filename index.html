@@ -97,6 +97,9 @@
             <a href="english quiz.html" class="nav-card"><span>🇬🇧</span><span>ENGLISH 8</span></a>
             <a href="history quiz.html" class="nav-card"><span>📜</span><span>HISTORY 8</span></a>
             <a href="vatly quiz.html" class="nav-card"><span>⚡</span><span>PHYSICS 8</span></a>
+            
+            <a href="TinHoc8_Quiz_System.html" class="nav-card"><span>💻</span><span>TIN HỌC 8</span></a>
+
             <a href="#" class="nav-card" onclick="alert('Updating...')"><span>✍️</span><span>VĂN 8</span></a>
         </div>
     </div>
@@ -135,7 +138,6 @@
             }
         }
 
-        // Logic điểm danh mới (20đ)
         window.dailyCheckIn = function() {
             const today = new Date().toLocaleDateString();
             if (userData.lastCheckIn === today) {
@@ -212,9 +214,23 @@
             localStorage.setItem('quan_phap_su_data', JSON.stringify(userData));
         }
 
-        // Đã gỡ bỏ logic F11 keydown để giữ chức năng mặc định của trình duyệt
+        window.addEventListener("keydown", function(event) {
+            if (event.key === "F11") {
+                event.preventDefault();
+                const today = new Date().toLocaleDateString();
+                if (userData.lastCheckIn === today) {
+                    showToast("🎁 Hôm nay nhận 10đ rồi, mai quay lại nhé!");
+                } else {
+                    userData.points += 10;
+                    userData.lastCheckIn = today;
+                    updateUI();
+                    syncOnline();
+                    showToast("💰 Đã cộng 10đ chuyên cần!");
+                }
+            }
+        });
 
-        window.onload = window.updateUI;
+        window.onload = updateUI;
     </script>
 </body>
 </html>
