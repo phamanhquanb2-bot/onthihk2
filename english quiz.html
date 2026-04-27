@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>English 8 - Final Edition (Anti-Cheat)</title>
+    <title>English 8 - Master Edition</title>
     <style>
-        :root { --primary: #00d4ff; --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --accent: #ffcc00; --success: #00ff88; }
+        :root { --primary: #00d4ff; --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --accent: #ffcc00; --success: #00ff88; --danger: #ff4444; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); max-width: 850px; margin: auto; padding: 20px; text-align: center; }
         h1 { color: var(--primary); text-transform: uppercase; border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
         #toast { position: fixed; bottom: -60px; left: 50%; transform: translateX(-50%); background: var(--success); color: #000; padding: 12px 25px; border-radius: 50px; font-weight: bold; z-index: 10002; transition: 0.4s; opacity: 0; pointer-events: none; }
@@ -19,7 +19,7 @@
         .wrong { background: #da3633 !important; border-color: #f85149 !important; }
         .revive-btn { margin-top: 10px; background: var(--accent); color: #000; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; }
         .btn-submit { padding: 15px; background: var(--primary); color: #000; font-weight: bold; border-radius: 8px; cursor: pointer; border: none; margin-top: 20px; font-size: 1.1em; width: 100%; }
-        #result { text-align: center; font-size: 1.5em; margin-top: 20px; display: none; font-weight: bold; padding: 20px; border-radius: 15px; background: rgba(0,0,0,0.3); border: 2px solid var(--primary); }
+        #result { text-align: center; font-size: 1.5em; margin-top: 20px; display: none; font-weight: bold; padding: 25px; border-radius: 15px; background: rgba(0,0,0,0.4); border: 2px solid var(--primary); }
     </style>
 </head>
 <body>
@@ -47,10 +47,9 @@
         const db = getDatabase(app);
         let userData = JSON.parse(localStorage.getItem('quan_phap_su_data')) || { points: 0, userName: null, banUntil: null };
 
-        // Kiểm tra lệnh BAN khi vào trang
+        // Kiểm tra lệnh BAN
         if (userData.banUntil && new Date().getTime() < userData.banUntil) {
-            const remain = Math.ceil((userData.banUntil - new Date().getTime()) / 1000 / 60);
-            alert(`⛔ Ông đang bị cấm thi! Quay lại sau ${remain} phút nữa.`);
+            alert(`⛔ Ông đang bị cấm thi! Hết hạn sau ít phút nữa.`);
             location.href = "index.html";
         }
 
@@ -91,24 +90,15 @@
         window.check = (btn, sel, cor, card) => {
             card.querySelectorAll('button').forEach(b => b.disabled = true);
             if(sel === cor) { 
-                btn.classList.add('correct'); 
-                userData.points += 2; 
-                window.showToast("🔥 ĐÚNG! +2đ"); 
+                btn.classList.add('correct'); userData.points += 2; window.showToast("🔥 ĐÚNG! +2đ"); 
             } else { 
-                btn.classList.add('wrong'); 
-                window.showToast("❌ SAI RỒI!"); 
-                // Nút hồi sinh 100đ
+                btn.classList.add('wrong'); window.showToast("❌ SAI RỒI!"); 
                 if(userData.points >= 100) {
                     const rb = document.createElement('button');
-                    rb.className = 'revive-btn';
-                    rb.innerText = "🆘 Hồi sinh (100⭐)";
+                    rb.className = 'revive-btn'; rb.innerText = "🆘 Hồi sinh (100⭐)";
                     rb.onclick = () => {
-                        userData.points -= 100;
-                        window.save();
-                        card.querySelectorAll('button').forEach(b => { 
-                            if(!b.classList.contains('revive-btn')) b.disabled = false;
-                            b.classList.remove('wrong');
-                        });
+                        userData.points -= 100; window.save();
+                        card.querySelectorAll('button').forEach(b => { if(!b.classList.contains('revive-btn')) b.disabled = false; b.classList.remove('wrong'); });
                         rb.remove();
                     };
                     card.appendChild(rb);
@@ -119,44 +109,60 @@
 
         window.showResults = () => {
             const res = document.getElementById('result');
+            const correctCount = document.querySelectorAll('.correct').length;
+            const total = questions.length;
             res.style.display = 'block';
-            res.innerText = `KẾT QUẢ: ${document.querySelectorAll('.correct').length}/${questions.length}`;
-            window.scrollTo(0, document.body.scrollHeight);
+
+            let comment = "";
+            let color = "";
+
+            if (correctCount === total) {
+                comment = "🔥 QUÁ GIỎI PHÁP SƯ ƠI! Tuyệt đối luôn.";
+                color = "var(--success)";
+            } else if (correctCount >= total / 2) {
+                comment = "✨ Ổn phết! Tiếp tục phát huy nhé.";
+                color = "var(--accent)";
+            } else {
+                comment = "📚 Cần cố gắng nhiều hơn ông ơi, hổng kiến thức rồi!";
+                color = "var(--danger)";
+            }
+
+            res.innerHTML = `
+                <div style="font-size: 0.7em; color: var(--primary);">BÁO CÁO KẾT QUẢ</div>
+                <div style="color: ${color}; font-size: 1.2em;">${correctCount}/${total} Câu Đúng</div>
+                <div style="margin-top: 10px; color: ${color}; font-size: 0.8em; font-style: italic;">"${comment}"</div>
+            `;
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
         };
 
-        // --- HỆ THỐNG ANTI-CHEAT ---
+        // --- ANTI CHEAT ---
         let cheatCount = 0;
         window.applyPenalty = function() {
             cheatCount++;
             if (cheatCount >= 2) {
-                userData.points = 0; 
-                userData.banUntil = new Date().getTime() + (5 * 60 * 1000);
-                window.save();
-                alert("🚫 VI PHẠM QUÁ 2 LẦN! Ông bị reset điểm và BAN 5 phút.");
+                userData.points = 0; userData.banUntil = new Date().getTime() + (5 * 60 * 1000); window.save();
+                alert("🚫 VI PHẠM QUÁ 2 LẦN! Reset điểm và BAN 5 phút.");
                 location.href = "index.html";
-            } else {
-                alert("⚠️ CẢNH BÁO: Không rời trang hoặc dùng phím tắt! Vi phạm lần nữa sẽ bị RESET ĐIỂM.");
-            }
+            } else { alert("⚠️ CẢNH BÁO: Không rời trang hoặc dùng phím tắt trái phép!"); }
         };
 
         document.addEventListener("visibilitychange", () => { if (document.hidden) window.applyPenalty(); });
         window.addEventListener('keydown', (e) => {
             const forbidden = ['c', 'v', 'u', 's'];
             if (e.key === "F11" || (e.ctrlKey && forbidden.includes(e.key.toLowerCase()))) {
-                e.preventDefault();
-                window.applyPenalty();
+                e.preventDefault(); window.applyPenalty();
             }
         });
         document.addEventListener('contextmenu', e => e.preventDefault());
 
-        // KHỞI TẠO QUIZ
+        // RENDER
         const container = document.getElementById('quiz-content');
         container.innerHTML = "";
-        questions.sort(() => Math.random() - 0.5).forEach((item, idx) => {
+        [...questions].sort(() => Math.random() - 0.5).forEach((item, idx) => {
             const card = document.createElement('div');
             card.className = 'question-card';
             card.innerHTML = `<h3>Câu ${idx + 1}: ${item.q}</h3><div class="options"></div>`;
-            item.a.sort(() => Math.random() - 0.5).forEach((opt, i) => {
+            [...item.a].sort(() => Math.random() - 0.5).forEach((opt, i) => {
                 const btn = document.createElement('button');
                 btn.className = 'option'; btn.innerText = `${String.fromCharCode(65 + i)}. ${opt}`;
                 btn.onclick = () => window.check(btn, opt, item.c, card);
