@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tin Học 8 - Anti Cheat PRO</title>
+    <style>
+        :root { --primary: #00ff88; --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --success: #00ff88; --danger: #ff4444; --accent: #ffcc00; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); 
+            max-width: 850px; margin: auto; padding: 20px; text-align: center;
+            -webkit-user-select: none; -ms-user-select: none; user-select: none;
+        }
+
+        /* Toast thông báo kiểu History */
+        #toast {
+            position: fixed; bottom: -60px; left: 50%; transform: translateX(-50%);
+            background: var(--primary); color: #000; padding: 12px 25px; border-radius: 50px;
+            font-weight: bold; box-shadow: 0 0 20px rgba(0,255,136,0.5); z-index: 10005;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity: 0; pointer-events: none;
+        }
+        #toast.show { bottom: 30px; opacity: 1; }
+
+        h1 { color: var(--primary); text-transform: uppercase; border-bottom: 2px solid var(--primary); padding-bottom: 10px; text-shadow: 0 0 10px rgba(0,255,136,0.3); }
+        
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 40px 0; }
+        .menu-btn { 
+            background: var(--card); border: 2px solid var(--primary); color: var(--text); 
+            padding: 25px; border-radius: 12px; cursor: pointer; font-weight: bold; 
+            transition: 0.3s; position: relative; overflow: hidden;
+        }
+        .menu-btn:hover { background: var(--primary); color: #000; transform: scale(1.05); box-shadow: 0 0 20px rgba(0,255,136,0.3); }
+        .menu-btn.locked { opacity: 0.5; border-color: var(--danger); cursor: not-allowed; filter: grayscale(1); }
+
+        .quiz-area { display: none; text-align: left; }
+        .question-card { background: var(--card); padding: 25px; border-radius: 15px; margin-bottom: 20px; border-left: 5px solid #30363d; transition: 0.3s; }
+        .question-card:hover { border-left-color: var(--primary); background: #1c2128; }
+        
+        /* Hitbox cho Option */
+        .option { 
+            background: #21262d; padding: 15px; border-radius: 10px; cursor: pointer; 
+            margin-top: 12px; border: 1px solid transparent; transition: 0.2s; 
+            display: flex; align-items: center; gap: 10px;
+        }
+        .option:hover { background: #30363d; border-color: #8b949e; transform: translateX(5px); }
+        .option.selected { background: #30363d; border-color: var(--primary); box-shadow: 0 0 15px rgba(0,255,136,0.1); }
+        
+        .correct { background: rgba(0, 255, 136, 0.1) !important; border-color: var(--success) !important; color: var(--success); font-weight: bold; }
+        .wrong { background: rgba(255, 68, 68, 0.1) !important; border-color: var(--danger) !important; color: var(--danger); }
+
+        .btn-final { 
+            width: 100%; padding: 18px; background: var(--primary); color: #000; 
+            font-weight: bold; border-radius: 10px; border: none; cursor: pointer; 
+            margin-top: 25px; font-size: 1.1em; transition: 0.3s;
+        }
+        .btn-final:hover { filter: brightness(1.1); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,255,136,0.3); }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+    <div id="toast"></div>
+    <div id="home">
+        <h1>HỆ THỐNG TIN HỌC 8</h1>
+        <p style="color: var(--accent);">Trạng thái: anti cheat Đang Bật 🛡️</p>
+        <div class="menu-grid">
+            <div id="btn-801" class="menu-btn" onclick="checkBan(801)">MÃ ĐỀ 801</div>
+            <div id="btn-802" class="menu-btn" onclick="checkBan(802)">MÃ ĐỀ 802</div>
+            <div id="btn-803" class="menu-btn" onclick="checkBan(803)">MÃ ĐỀ 803</div>
+            <div id="btn-804" class="menu-btn" onclick="checkBan(804)">MÃ ĐỀ 804</div>
+        </div>
+    </div>
+
+    <div id="quiz-area" class="quiz-area">
+        <div id="questions-container"></div>
+        <button id="submit-btn" class="btn-final" onclick="submitTest()">NỘP BÀI VÀ CHẤM ĐIỂM</button>
+        <div id="result" style="display:none; margin-top: 25px; font-size: 1.6rem; font-weight: bold; text-align: center;"></div>
+        <button class="btn-final" style="background:#30363d; color:#fff;" onclick="location.href='index.html'">⬅️ QUAY LẠI TRANG CHỦ</button>
+    </div>
+
+    <script type="module">
+        const database = {
+            801: [
+                {q:"Mục lục tự động thường được xây dựng dựa trên:", a:["Heading","In đậm","Căn giữa","Màu sắc"], c:"Heading"},
+                {q:"Slide Master dùng để:", a:["Định dạng chung cho toàn bộ slide","Chèn ảnh","Xóa slide","Tạo hiệu ứng bay"], c:"Định dạng chung cho toàn bộ slide"},
+                {q:"Quá trình chuyển từ ý tưởng sang bước thực hiện gọi là:", a:["Xây dựng thuật toán","Vẽ sơ đồ","Gõ code","Chạy thử"], c:"Xây dựng thuật toán"},
+                {q:"Biến là đại lượng:", a:["Có thể thay đổi giá trị","Không thay đổi","Chỉ là số nguyên","Luôn bằng 0"], c:"Có thể thay đổi giá trị"},
+                {q:"Dữ liệu 'Họ và tên' thuộc kiểu:", a:["String","Integer","Real","Boolean"], c:"String"},
+                {q:"Kết quả phép chia 7/2 cần dùng kiểu:", a:["Số thực","Số nguyên","Xâu","Logic"], c:"Số thực"},
+                {q:"Cấu trúc lặp dùng để:", a:["Thực hiện lại nhóm lệnh","Kết thúc chương trình","Rẽ nhánh","Khai báo"], c:"Thực hiện lại nhóm lệnh"},
+                {q:"Lệnh If-Then thực hiện khi điều kiện:", a:["Đúng","Sai","Vô lý","Bằng 0"], c:"Đúng"},
+                {q:"Biến quản lý số lần lặp trong For là:", a:["Biến đếm","Biến tạm","Biến tổng","Biến logic"], c:"Biến đếm"},
+                {q:"Kiểm tra số dương, điều kiện là:", a:["n > 0","n < 0","n == 0","n != 0"], c:"n > 0"},
+                {q:"Lỗi viết sai từ khóa gọi là:", a:["Lỗi cú pháp","Lỗi logic","Lỗi runtime","Lỗi dữ liệu"], c:"Lỗi cú pháp"},
+                {q:"Kết quả sai dù chương trình vẫn chạy là:", a:["Lỗi logic","Lỗi cú pháp","Lỗi mạng","Lỗi dữ liệu"], c:"Lỗi logic"}
+            ],
+            802: [
+                {q:"Page Number trong Footer giúp:", a:["Đánh số trang ở dưới","Đánh dấu trang trên","Chèn ảnh","Tạo mục lục"], c:"Đánh số trang ở dưới"},
+                {q:"Transitions thiết lập:", a:["Thời gian chuyển slide","Chèn video","Định dạng chữ","Vẽ sơ đồ"], c:"Thời gian chuyển slide"},
+                {q:"Tên biến ĐÚNG là:", a:["Không chứa kí tự đặc biệt","Có dấu cách","Bắt đầu bằng số","Trùng từ khóa"], c:"Không chứa kí tự đặc biệt"},
+                {q:"Giá trị đưa vào biến qua lệnh:", a:["Lệnh gán","Lệnh lặp","Lệnh xóa","Lệnh rẽ nhánh"], c:"Lệnh gán"},
+                {q:"Kiểu dữ liệu 'Tuổi' là:", a:["Integer","String","Boolean","Real"], c:"Integer"},
+                {q:"Phép toán 10 mod 3 bằng:", a:["1","0","2","3"], c:"1"},
+                {q:"Vòng lặp For i=1 to 5 chạy:", a:["5 lần","4 lần","6 lần","1 lần"], c:"5 lần"},
+                {q:"Khối lệnh sau Else chạy khi If:", a:["Sai","Đúng","Bằng 0","Vô lý"], c:"Sai"},
+                {q:"Kiểm tra số chẵn:", a:["n % 2 == 0","n % 2 != 0","n % 3 == 0","n > 0"], c:"n % 2 == 0"},
+                {q:"Nút lệnh Symbol dùng để:", a:["Chèn kí tự đặc biệt","Chèn ảnh","Lưu file","In ấn"], c:"Chèn kí tự đặc biệt"},
+                {q:"Để định dạng lề trang, chọn:", a:["Page Layout","Home","Insert","Review"], c:"Page Layout"},
+                {q:"Kiểu dữ liệu Boolean có giá trị:", a:["True/False","Số thực","Số nguyên","Xâu kí tự"], c:"True/False"}
+            ],
+            803: [
+                {q:"Tổ hợp Tìm kiếm và Thay thế:", a:["Ctrl + H","Ctrl + C","Ctrl + V","Ctrl + F"], c:"Ctrl + H"},
+                {q:"Chèn video từ máy tính:", a:["Video -> This Device","Insert -> Text","Draw -> Video","Online Video"], c:"Video -> This Device"},
+                {q:"Biểu diễn thuật toán bằng:", a:["Liệt kê hoặc Sơ đồ khối","Vẽ tranh","Hát","Ghi âm"], c:"Liệt kê hoặc Sơ đồ khối"},
+                {q:"Lưu giá trị 8.5 vào kiểu Nguyên thì:", a:["Chỉ còn phần nguyên 8","Báo lỗi","Làm tròn lên 9","Giữ 8.5"], c:"Chỉ còn phần nguyên 8"},
+                {q:"Lỗi chia cho 0 là:", a:["Lỗi Runtime","Lỗi cú pháp","Lỗi giao diện","Lỗi ổ cứng"], c:"Lỗi Runtime"},
+                {q:"Để tạo bảng trong Word, chọn:", a:["Insert -> Table","Home -> Table","Layout -> Table","View -> Table"], c:"Insert -> Table"},
+                {q:"Hàm tính tổng trong Excel là:", a:["SUM","AVERAGE","MAX","MIN"], c:"SUM"},
+                {q:"Kiểu dữ liệu Real dùng cho:", a:["Số thực","Số nguyên","Logic","Xâu"], c:"Số thực"},
+                {q:"Lệnh If lồng nhau dùng khi:", a:["Có nhiều điều kiện loại trừ","Kết thúc bài","Xóa biến","Lặp vô hạn"], c:"Có nhiều điều kiện loại trừ"},
+                {q:"Thuật toán tối ưu khi:", a:["Sử dụng ít tài nguyên","Viết dài","Nhiều hình vẽ","Tên hay"], c:"Sử dụng ít tài nguyên"},
+                {q:"Dấu '=' trong lệnh gán của C++ là:", a:["=","==",":=","=>"], c:"="},
+                {q:"Lệnh in ra màn hình trong C++:", a:["cout","cin","print","scanf"], c:"cout"}
+            ],
+            804: [
+                {q:"Next Page giúp:", a:["Số trang độc lập giữa Section","Xóa trang","Làm đẹp chữ","In nhanh"], c:"Số trang độc lập giữa Section"},
+                {q:"Trigger dùng để:", a:["Kích hoạt hiệu ứng khi click đối tượng","Xóa slide","Đổi màu nền","Tự động lưu"], c:"Kích hoạt hiệu ứng khi click đối tượng"},
+                {q:"Vòng lặp While kiểm tra điều kiện:", a:["Trước khi chạy","Sau khi chạy","Khi kết thúc","Không bao giờ"], c:"Trước khi chạy"},
+                {q:"Debugger giúp:", a:["Soi giá trị biến tìm lỗi","Gõ code nhanh","Thiết kế","Kết nối mạng"], c:"Soi giá trị biến tìm lỗi"},
+                {q:"Khai báo biến x kiểu số thực trong C++:", a:["float x;","int x;","string x;","bool x;"], c:"float x;"},
+                {q:"Lệnh nhập dữ liệu trong C++:", a:["cin","cout","input","get"], c:"cin"},
+                {q:"Kết quả 15 / 2 trong kiểu nguyên là:", a:["7","7.5","8","0"], c:"7"},
+                {q:"Cấu trúc Switch-Case dùng để:", a:["Chọn một trong nhiều nhánh","Lặp vô hạn","Gỡ lỗi","Khai báo hằng"], c:"Chọn một trong nhiều nhánh"},
+                {q:"Kí tự kết thúc lệnh trong C++:", a:[";",":",".",","], c:";"},
+                {q:"Phép so sánh bằng trong C++:", a:["==","=","!=","<="], c:"=="},
+                {q:"Thư viện nhập xuất cơ bản C++:", a:["iostream","cmath","string","vector"], c:"iostream"},
+                {q:"Chú thích một dòng trong C++:", a:["//","/*","--","#"], c:"//"}
+            ]
+        };
+
+        let currentData = [];
+        let currentMode = null;
+        let isExiting = false;
+        let cheatCount = 0;
+        let userData = JSON.parse(localStorage.getItem('quan_phap_su_data')) || { points: 0, bans: {} };
+
+        window.showToast = function(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message; toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 2000);
+        }
+
+        window.checkBan = (code) => {
+            const now = new Date().getTime();
+            if (userData.bans && userData.bans[code] && now < userData.bans[code]) {
+                const remaining = Math.ceil((userData.bans[code] - now) / 60000);
+                alert(`🚫 Mã đề ${code} đang bị khóa do gian lận! Thử lại sau ${remaining} phút.`);
+                return;
+            }
+            initQuiz(code);
+        };
+
+        window.initQuiz = (code) => {
+            currentMode = code;
+            document.getElementById('home').style.display = 'none';
+            document.getElementById('quiz-area').style.display = 'block';
+            currentData = [...database[code]].sort(() => Math.random() - 0.5);
+            const container = document.getElementById('questions-container');
+            container.innerHTML = currentData.map((q, idx) => `
+                <div class="question-card" id="q-${idx}">
+                    <p><strong>Câu ${idx + 1}:</strong> ${q.q}</p>
+                    <div class="options">
+                        ${[...q.a].sort(() => Math.random() - 0.5).map(opt => `
+                            <div class="option" onclick="selectOpt(${idx}, '${opt}', this)">${opt}</div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+            window.scrollTo(0,0);
+        };
+
+        window.selectOpt = (qIdx, choice, el) => {
+            if (isExiting) return;
+            const card = document.getElementById(`q-${qIdx}`);
+            card.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+            el.classList.add('selected');
+            el.dataset.userChoice = choice;
+            showToast("Đã chọn! ✔️");
+        };
+
+        window.submitTest = () => {
+            isExiting = true;
+            let score = 0;
+            currentData.forEach((q, idx) => {
+                const card = document.getElementById(`q-${idx}`);
+                const selected = card.querySelector('.option.selected');
+                const userChoice = selected ? selected.dataset.userChoice : null;
+                card.querySelectorAll('.option').forEach(opt => {
+                    if (opt.innerText === q.c) opt.classList.add('correct');
+                    if (userChoice === opt.innerText && userChoice !== q.c) opt.classList.add('wrong');
+                });
+                if (userChoice === q.c) score++;
+            });
+            const res = document.getElementById('result'); res.style.display = 'block';
+            res.innerText = `KẾT QUẢ: ${score}/${currentData.length} ĐÚNG. +${score}⭐`;
+            userData.points += score;
+            localStorage.setItem('quan_phap_su_data', JSON.stringify(userData));
+            document.getElementById('submit-btn').style.display = 'none';
+        };
+
+        const penalty = () => {
+            if (isExiting || !currentMode) return;
+            cheatCount++;
+            if (cheatCount >= 2) {
+                if(!userData.bans) userData.bans = {};
+                userData.bans[currentMode] = new Date().getTime() + (5 * 60 * 1000);
+                localStorage.setItem('quan_phap_su_data', JSON.stringify(userData));
+                alert(`🚫 GIAN LẬN PHÁT HIỆN! Mã đề ${currentMode} bị BAN 5 phút. Điểm không được cộng.`);
+                location.reload();
+            } else { 
+                alert("⚠️ CẢNH BÁO: Hệ thống Super Vision phát hiện bạn rời trang hoặc dùng phím tắt trái phép!"); 
+            }
+        };
+
+        document.addEventListener("visibilitychange", () => { if (document.hidden) penalty(); });
+        window.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey && ['c','v','u','s'].includes(e.key.toLowerCase())) || e.key === "F12") {
+                e.preventDefault(); penalty();
+            }
+        });
+    </script>
+</body>
+</html>
