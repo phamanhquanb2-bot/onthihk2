@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>English 8 - Final Fix Pro</title>
+    <title>English 8 - Final Edition</title>
     <style>
         :root { --primary: #00d4ff; --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --accent: #ffcc00; --success: #00ff88; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); max-width: 850px; margin: auto; padding: 20px; text-align: center; }
@@ -46,14 +46,13 @@
         const db = getDatabase(app);
         let userData = JSON.parse(localStorage.getItem('quan_phap_su_data')) || { points: 0, userName: null };
 
-        // 20 CÂU HỎI ĐẦY ĐỦ - ĐÃ FIX NỘI DUNG TRÁNH LỖI XÁO TRỘN
         const questions = [
             { q: "Pronunciation: measure, theater, idea, fear", a: ["measure", "theater", "idea", "fear"], c: "measure" },
             { q: "Pronunciation: heart, peach, dream, team", a: ["heart", "peach", "dream", "team"], c: "heart" },
             { q: "Stress: pretty, central, simple, alone", a: ["alone", "pretty", "central", "simple"], c: "alone" },
             { q: "Humans can’t live unless they have enough ___________ to breathe.", a: ["oxygen", "water", "planets", "food"], c: "oxygen" },
-            { q: "After nearly a thousand years, villagers still make pottery completely _______ hand.", a: ["by", "in", "with", "for"], c: "by" },
-            { q: "The woman reported that she had seen a(n) ______________ alien.", a: ["huge", "tiny", "average", "small"], c: "huge" },
+            { q: "After nearly a thousand years, villagers still make pottery _______ hand.", a: ["by", "in", "with", "for"], c: "by" },
+            { q: "The woman reported that she had seen a(n) ____________ alien.", a: ["huge", "tiny", "average", "small"], c: "huge" },
             { q: "I asked her what crops ___________ in her fields.", a: ["she grew", "she grows", "does she grow"], c: "she grew" },
             { q: "He asked if Bánh Chưng ______________ from sticky rice.", a: ["was made", "made", "is made"], c: "was made" },
             { q: "This puzzle is ___________ than the one yesterday.", a: ["harder", "hard", "more hardly"], c: "harder" },
@@ -63,14 +62,12 @@
             { q: "They said they __________ to the party the next day.", a: ["would go", "will go", "went"], c: "would go" },
             { q: "The doctor asked her __________ any medication.", a: ["if she took", "if she takes", "if she will take"], c: "if she took" },
             { q: "Viet Nam has 54 ethnic groups.", a: ["There are 54 ethnic groups in Viet Nam.", "There were 54 people."], c: "There are 54 ethnic groups in Viet Nam." },
-            { q: "James: 'I will fly around the world in my jet.'", a: ["James said he would fly around the world in his jet.", "James said he flies."], c: "James said he would fly around the world in his jet." },
-            { q: "Venus and Earth are almost the same size.", a: ["Venus is as big as the Earth.", "Venus is bigger than Earth."], c: "Venus is as big as the Earth." },
-            { q: "“Do you want to spend your holiday in an ethnic village?”", a: ["My sister asked if I wanted to spend my holiday.", "My sister asked where I go."], c: "My sister asked if I wanted to spend my holiday." },
+            { q: "James: 'I will fly around the world in my jet.'", a: ["James said he would fly around the world", "James said he flies"], c: "James said he would fly around the world" },
+            { q: "Venus and Earth are almost the same size.", a: ["Venus is as big as the Earth.", "Venus is bigger"], c: "Venus is as big as the Earth." },
+            { q: "“Do you want to spend your holiday in an ethnic village?”", a: ["My sister asked if I wanted to spend my holiday", "My sister asked where I go"], c: "My sister asked if I wanted to spend my holiday" },
             { q: "A UFO can be a disk-shaped or egg-shaped object.", a: ["True", "False", "Doesn't say"], c: "True" },
             { q: "What technology helps Sophia recognize voices?", a: ["Voice recognition from Alphabet Inc.", "Facial recognition"], c: "Voice recognition from Alphabet Inc." }
         ];
-
-        const shuffle = (arr) => arr.sort(() => Math.random() - 0.5);
 
         window.showToast = (msg) => {
             const t = document.getElementById('toast');
@@ -99,11 +96,13 @@
 
         const container = document.getElementById('quiz-content');
         container.innerHTML = "";
-        shuffle([...questions]).forEach((item, idx) => {
+        // Xáo câu hỏi
+        questions.sort(() => Math.random() - 0.5).forEach((item, idx) => {
             const card = document.createElement('div');
             card.className = 'question-card';
             card.innerHTML = `<h3>Câu ${idx + 1}: ${item.q}</h3><div class="options"></div>`;
-            shuffle([...item.a]).forEach((opt, i) => {
+            // Xáo đáp án
+            item.a.sort(() => Math.random() - 0.5).forEach((opt, i) => {
                 const btn = document.createElement('button');
                 btn.className = 'option'; btn.innerText = `${String.fromCharCode(65 + i)}. ${opt}`;
                 btn.onclick = () => window.check(btn, opt, item.c, card);
