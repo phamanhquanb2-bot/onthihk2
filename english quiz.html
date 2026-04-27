@@ -31,9 +31,27 @@
         .btn-submit { width: 100%; padding: 15px; background: var(--primary); color: #000; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 1.2em; margin-top: 20px; }
         #result { text-align: center; font-size: 1.5em; margin-top: 20px; display: none; font-weight: bold; padding: 20px; border-radius: 15px; background: rgba(0,0,0,0.3); }
         .back-link { display: block; text-align: center; margin-top: 20px; color: var(--primary); text-decoration: none; font-weight: bold; }
+        #toast {
+    position: fixed; 
+    bottom: -60px; 
+    left: 50%; 
+    transform: translateX(-50%);
+    background: var(--primary); 
+    color: #000; 
+    padding: 12px 25px; 
+    border-radius: 50px;
+    font-weight: bold; 
+    box-shadow: 0 0 20px rgba(0,255,136,0.5); 
+    z-index: 10002;
+    transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    opacity: 0; 
+    pointer-events: none; /* Bấm xuyên qua được nút điểm */
+}
+#toast.show { bottom: 30px; opacity: 1; }
     </style>
 </head>
 <body>
+    <div id="toast"></div>
     <div id="toast"></div>
     <h1>CHECK ANH 8</h1>
     <div class="wallet-bar">💰 Tài khoản: <span id="user-points-display">0</span> ⭐</div>
