@@ -3,20 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>English 8 - Pro Online</title>
+    <title>English 8 - Shuffle Pro</title>
     <style>
         :root { --primary: #00d4ff; --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --accent: #ffcc00; --success: #00ff88; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); max-width: 900px; margin: auto; padding: 20px; }
-        h1 { text-align: center; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 10px; text-transform: uppercase; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); max-width: 900px; margin: auto; padding: 20px; text-align: center; }
+        h1 { color: var(--primary); text-transform: uppercase; border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
+        
         #toast { position: fixed; bottom: -60px; left: 50%; transform: translateX(-50%); background: var(--success); color: #000; padding: 12px 25px; border-radius: 50px; font-weight: bold; box-shadow: 0 0 20px rgba(0,255,136,0.5); z-index: 10002; transition: 0.4s; opacity: 0; pointer-events: none; }
         #toast.show { bottom: 30px; opacity: 1; }
-        .wallet-bar { background: var(--card); padding: 10px 20px; border-radius: 50px; border: 1px solid var(--primary); display: block; margin: 0 auto 20px auto; width: fit-content; font-weight: bold; color: var(--primary); }
-        .question-card { background: var(--card); padding: 18px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #30363d; }
-        .options { display: grid; gap: 8px; margin-top: 12px; }
-        button.option { background: #21262d; color: var(--text); border: 1px solid #30363d; padding: 10px; border-radius: 6px; cursor: pointer; text-align: left; }
-        .correct { background: #238636 !important; }
-        .wrong { background: #da3633 !important; }
-        .btn-submit { width: 100%; padding: 15px; background: var(--primary); color: #000; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 20px; border: none; }
+
+        .wallet-bar { background: var(--card); padding: 10px 20px; border-radius: 50px; border: 1px solid var(--primary); display: inline-block; margin-bottom: 20px; font-weight: bold; color: var(--primary); }
+        .question-card { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #30363d; text-align: left; }
+        .section-tag { background: var(--primary); color: #000; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; margin-bottom: 10px; display: inline-block; }
+        .reading-box { background: #000; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #30363d; font-size: 0.9em; line-height: 1.5; color: #8b949e; }
+        .options { display: grid; gap: 10px; margin-top: 15px; }
+        
+        button.option { background: #21262d; color: var(--text); border: 1px solid #30363d; padding: 12px; border-radius: 8px; cursor: pointer; text-align: left; transition: 0.2s; font-size: 1em; }
+        button.option:hover:not(:disabled) { border-color: var(--primary); background: #30363d; }
+        .correct { background: #238636 !important; border-color: #2ea043 !important; }
+        .wrong { background: #da3633 !important; border-color: #f85149 !important; }
+        
+        .btn-submit { padding: 15px 40px; background: var(--primary); color: #000; font-weight: bold; border-radius: 8px; cursor: pointer; border: none; margin-top: 20px; font-size: 1.1em; width: 100%; }
         #result { text-align: center; font-size: 1.5em; margin-top: 20px; display: none; font-weight: bold; padding: 20px; border-radius: 15px; background: rgba(0,0,0,0.3); border: 2px solid var(--primary); }
     </style>
 </head>
@@ -24,10 +31,13 @@
     <div id="toast"></div>
     <h1>CHECK ANH 8</h1>
     <div class="wallet-bar">💰 Tài khoản: <span id="user-points-display">0</span> ⭐</div>
-    <div id="quiz-content">Đang tải câu hỏi...</div>
-    <button class="btn-submit" onclick="showResults()">CHẤM ĐIỂM </button>
+    
+    <div id="quiz-content">Đang triệu hồi câu hỏi...</div>
+    
+    <button class="btn-submit" onclick="showResults()">CHẤM ĐIỂM NGAY</button>
     <div id="result"></div>
-    <a href="index.html" style="color:var(--primary); display:block; text-align:center; margin-top:20px; text-decoration:none; font-weight:bold;">⬅️ Quay lại Sảnh chính</a>
+    
+    <a href="index.html" style="color:var(--primary); display:block; margin-top:20px; text-decoration:none; font-weight:bold;">⬅️ QUAY LẠI SẢNH CHÍNH</a>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
@@ -44,7 +54,33 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         let userData = JSON.parse(localStorage.getItem('quan_phap_su_data')) || { points: 0, userName: null };
-        let isFinished = false;
+
+        // 20 CÂU HỎI GỐC CỦA ÔNG
+        const oldQuestions = [
+            { type: "Phát âm", q: "measure, theater, idea, fear", a: ["measure", "theater", "idea", "fear"], c: "measure" },
+            { type: "Phát âm", q: "heart, peach, dream, team", a: ["heart", "peach", "dream", "team"], c: "heart" },
+            { type: "Trọng âm", q: "pretty, central, simple, alone", a: ["alone", "pretty", "central", "simple"], c: "alone" },
+            { type: "Ngữ pháp", q: "Humans can’t live unless they have enough ___________ to breathe.", a: ["oxygen", "water", "planets", "food"], c: "oxygen" },
+            { type: "Ngữ pháp", q: "After nearly a thousand years, the Chăm villagers still make pottery completely _______ hand.", a: ["by", "in", "with", "for"], c: "by" },
+            { type: "Ngữ pháp", q: "The woman reported that she had seen a(n) ______________ alien with the size of a building.", a: ["huge", "tiny", "average", "small"], c: "huge" },
+            { type: "Ngữ pháp", q: "I asked her what crops ___________ in her fields.", a: ["she grew", "she grows", "does she grow", "did she grow"], c: "she grew" },
+            { type: "Ngữ pháp", q: "He asked if Bánh Chưng ______________ from sticky rice.", a: ["was made", "made", "is made", "makes"], c: "was made" },
+            { type: "Ngữ pháp", q: "This puzzle is ___________ than the one we did yesterday.", a: ["harder", "hard", "more hardly", "hardly"], c: "harder" },
+            { type: "Ngữ pháp", q: "Without __________, objects wouldn't stay on the ground.", a: ["gravity", "oxygen", "temperature", "planet"], c: "gravity" },
+            { type: "Ngữ pháp", q: "Yesterday, while I ___________ TV, the power suddenly _________ out.", a: ["was watching/ went", "watch/ go", "watching/ went", "watched/ went"], c: "was watching/ went" },
+            { type: "Ngữ pháp", q: "Whose shoes are these? They're __________. ", a: ["theirs", "their", "them", "themselves"], c: "theirs" },
+            { type: "Ngữ pháp", q: "They said they __________ to the party the next day.", a: ["would go", "will go", "went", "goes"], c: "would go" },
+            { type: "Ngữ pháp", q: "The doctor asked her __________ any medication.", a: ["if she took", "if she takes", "if she has taken", "if she will take"], c: "if she took" },
+            { type: "Viết lại câu", q: "Viet Nam has 54 ethnic groups.", a: ["There are 54 ethnic groups in Viet Nam.", "There were 54 people.", "There are 45 groups.", "Only one group."], c: "There are 54 ethnic groups in Viet Nam." },
+            { type: "Viết lại câu", q: "James said: 'I will fly around the world in my jet.'", a: ["James told me that he would fly around the world in his jet.", "James told me he is flying.", "James told me he had flown.", "James told me he flies."], c: "James told me that he would fly around the world in his jet." },
+            { type: "Viết lại câu", q: "Venus and Earth are almost the same size.", a: ["Venus is as big as the Earth.", "Venus is bigger than Earth.", "Venus is bigger as Earth.", "Venus is as bigger as Earth."], c: "Venus is as big as the Earth." },
+            { type: "Viết lại câu", q: "“Do you want to spend your holiday in an ethnic village?” asked my sister.", a: ["My sister asked if I wanted to spend my holiday in an ethnic village.", "My sister asked where I go.", "My sister asked when I visit.", "My sister asked whether I want."], c: "My sister asked if I wanted to spend my holiday in an ethnic village." },
+            { type: "Bài đọc UFO", q: "A UFO can be a disk-shaped or egg-shaped object. (T/F/DS)", a: ["True", "False", "DS"], c: "True" },
+            { type: "Bài đọc Sophia", q: "What kind of technology helps Sophia recognize voices?", a: ["Voice recognition from Alphabet Inc.", "Visual data processing", "Facial recognition", "SingularityNET software"], c: "Voice recognition from Alphabet Inc." }
+        ];
+
+        // Hàm xáo trộn mảng
+        const shuffleArr = (arr) => arr.sort(() => Math.random() - 0.5);
 
         window.showToast = (msg) => {
             const t = document.getElementById('toast');
@@ -53,52 +89,61 @@
 
         window.save = () => {
             localStorage.setItem('quan_phap_su_data', JSON.stringify(userData));
-            if(document.getElementById('user-points-display')) document.getElementById('user-points-display').innerText = userData.points;
+            document.getElementById('user-points-display').innerText = userData.points;
             if (userData.userName) set(ref(db, 'ranks/' + userData.userName), { points: userData.points });
         };
 
-        const questions = [
-            { q: "Pronunciation: measure, theater, idea, fear", a: ["measure", "theater", "idea", "fear"], c: "measure" },
-            { q: "Humans can’t live unless they have enough oxygen.", a: ["True", "False"], c: "True" }
-        ];
-
-        window.startQuiz = () => {
-            const container = document.getElementById('quiz-content');
-            if(!container) return;
-            container.innerHTML = "";
-            questions.forEach((item, idx) => {
-                const card = document.createElement('div');
-                card.className = 'question-card';
-                card.innerHTML = `<h3>Q${idx + 1}: ${item.q}</h3><div class="options"></div>`;
-                item.a.forEach(opt => {
-                    const btn = document.createElement('button');
-                    btn.className = 'option'; btn.innerText = opt;
-                    btn.onclick = () => {
-                        card.querySelectorAll('button').forEach(b => b.disabled = true);
-                        if(opt === item.c) { btn.classList.add('correct'); userData.points += 2; } 
-                        else { btn.classList.add('wrong'); }
-                        window.save();
-                    };
-                    card.querySelector('.options').appendChild(btn);
-                });
-                container.appendChild(card);
-            });
+        window.check = (btn, sel, cor, card) => {
+            card.querySelectorAll('button').forEach(b => b.disabled = true);
+            if(sel === cor) {
+                btn.classList.add('correct'); userData.points += 2; window.showToast("🔥 ĐÚNG! +2đ");
+            } else {
+                btn.classList.add('wrong'); window.showToast("❌ SAI RỒI!");
+            }
             window.save();
         };
 
         window.showResults = () => {
-            isFinished = true;
             const res = document.getElementById('result');
+            const score = document.querySelectorAll('.correct').length;
             res.style.display = 'block';
-            res.innerText = `KẾT QUẢ: ${document.querySelectorAll('.correct').length}/${questions.length}`;
+            res.innerText = `KẾT QUẢ: ${score}/${oldQuestions.length}. Chúc mừng pháp sư!`;
             window.scrollTo(0, document.body.scrollHeight);
         };
 
-        window.addEventListener("keydown", (e) => {
-            if (e.key === "F11") { e.preventDefault(); userData.points += 10; window.showToast("💰 CHUYÊN CẦN: +10đ!"); window.save(); }
+        // KHỞI TẠO VÀ XÁO TRỘN
+        const container = document.getElementById('quiz-content');
+        container.innerHTML = "";
+        
+        // Xáo trộn thứ tự 20 câu hỏi
+        shuffleArr([...oldQuestions]).forEach((item, idx) => {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            card.innerHTML = `
+                <span class="section-tag">${item.type}</span>
+                <h3>Câu ${idx + 1}: ${item.q}</h3>
+                <div class="options"></div>
+            `;
+            
+            // Xáo trộn thứ tự A, B, C, D của từng câu
+            shuffleArr([...item.a]).forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'option';
+                btn.innerText = `${String.fromCharCode(65 + i)}. ${opt}`;
+                btn.onclick = () => window.check(btn, opt, item.c, card);
+                card.querySelector('.options').appendChild(btn);
+            });
+            container.appendChild(card);
         });
 
-        window.onload = window.startQuiz;
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "F11") { 
+                e.preventDefault(); userData.points += 10; 
+                window.showToast("💰 CHUYÊN CẦN: +10đ!"); window.save(); 
+            }
+        });
+
+        window.save();
     </script>
 </body>
 </html>
