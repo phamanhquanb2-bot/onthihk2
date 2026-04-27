@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sử 8</title>
+    <title>Sử 8 - Check Var HKII 🚀</title>
     <style>
         :root { --primary: #ffcc00; --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --success: #00ff88; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); max-width: 850px; margin: auto; padding: 20px; }
         h1 { text-align: center; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 10px; text-transform: uppercase; }
         
-        /* Thông báo bay - Fix lỗi chặn click */
+        /* Thông báo bay - Đã tối ưu */
         #toast {
             position: fixed; bottom: -60px; left: 50%; transform: translateX(-50%);
             background: var(--success); color: #000; padding: 12px 25px; border-radius: 50px;
@@ -40,8 +40,27 @@
     <div id="result"></div>
     <a href="index.html" class="back-link">⬅️ Quay lại Sảnh chính</a>
 
-    <script>
-        let userData = JSON.parse(localStorage.getItem('quan_phap_su_data')) || { points: 0, lastCheckIn: null };
+    <script type="module">
+        // 1. Nhúng Firebase để đồng bộ điểm online
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
+
+        // 2. Chìa khóa Firebase của ông
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6-e4i-Bo5nrjV-_KmyLGPrZom07Zzgr0",
+            authDomain: "onthihocki.firebaseapp.com",
+            databaseURL: "https://onthihocki-default-rtdb.firebaseio.com",
+            projectId: "onthihocki",
+            storageBucket: "onthihocki.firebasestorage.app",
+            messagingSenderId: "225768990288",
+            appId: "1:225768990288:web:76c48c3067635c7e675355"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // --- DỮ LIỆU ---
+        let userData = JSON.parse(localStorage.getItem('quan_phap_su_data')) || { points: 0, userName: null, lastCheckIn: null };
         let answeredCount = 0, bonusReceived = false, cheatCount = 0, isFinished = false;
 
         const questions = [
@@ -68,15 +87,25 @@
         ];
 
         function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
-        function save() { localStorage.setItem('quan_phap_su_data', JSON.stringify(userData)); document.getElementById('user-points-display').innerText = userData.points; }
+        
+        function save() { 
+            localStorage.setItem('quan_phap_su_data', JSON.stringify(userData)); 
+            document.getElementById('user-points-display').innerText = userData.points;
+            // Gửi điểm lên mây
+            if (userData.userName) {
+                set(ref(db, 'ranks/' + userData.userName), { points: userData.points });
+            }
+        }
 
         function showToast(msg) {
             const t = document.getElementById('toast');
-            t.innerText = msg; t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 2000);
+            if(t) {
+                t.innerText = msg; t.classList.add('show');
+                setTimeout(() => t.classList.remove('show'), 2000);
+            }
         }
 
-        function initQuiz() {
+        window.initQuiz = function() {
             const container = document.getElementById('quiz-content');
             container.innerHTML = "";
             const selected = shuffle([...questions]).slice(0, 15);
@@ -116,7 +145,16 @@
         }
 
         window.addEventListener("keydown", (e) => {
-            if (e.key === "F11") { e.preventDefault(); userData.points += 10; save(); showToast("💰 CHUYÊN CẦN: +10đ!"); }
+            if (e.key === "F11") { 
+                e.preventDefault(); 
+                const today = new Date().toLocaleDateString();
+                if (userData.lastCheckIn === today) {
+                    showToast("🎁 Hôm nay nhận quà rồi!");
+                } else {
+                    userData.points += 10; userData.lastCheckIn = today; save(); 
+                    showToast("💰 CHUYÊN CẦN: +10đ!"); 
+                }
+            }
         });
 
         function triggerPunishment(reason) {
@@ -124,7 +162,7 @@
             if (cheatCount === 1) showToast(`⚠️ CẢNH CÁO: ${reason}!`);
             else {
                 userData.points = 0; save();
-                document.body.innerHTML = `<div style="background:#da3633; color:#fff; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px;"><h1>🚫 ĐÃ RESET TÀI KHOẢN</h1><p>Phát hiện gian lận: ${reason}.</p><button onclick="location.href='index.html'" style="padding:15px;">QUAY VỀ SẢNH CHÍNH</button></div>`;
+                document.body.innerHTML = `<div style="background:#da3633; color:#fff; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px;"><h1>🚫 RESET ĐIỂM</h1><p>Gian lận: ${reason}.</p><button onclick="location.href='index.html'" style="padding:15px;">QUAY VỀ</button></div>`;
             }
         }
 
@@ -133,7 +171,7 @@
             document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && !isFinished) triggerPunishment("Thoát F11"); });
         }
 
-        function showResults() {
+        window.showResults = function() {
             isFinished = true; if (document.fullscreenElement) document.exitFullscreen();
             const res = document.getElementById('result');
             const score = document.querySelectorAll('.correct').length;
@@ -146,6 +184,7 @@
             res.innerText = `KẾT QUẢ: ${score}/${total}. ${msg}`;
             window.scrollTo(0, document.body.scrollHeight);
         }
+        
         window.onload = initQuiz;
     </script>
 </body>
