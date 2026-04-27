@@ -9,11 +9,12 @@
         body.light-mode { --bg: #f0f2f5; --card: #ffffff; --text: #1c1e21; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; transition: 0.3s; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         
+        /* Thông báo bay (Toast) */
         #toast {
-            position: fixed; bottom: -50px; left: 50%; transform: translateX(-50%);
+            position: fixed; bottom: -60px; left: 50%; transform: translateX(-50%);
             background: var(--primary); color: #000; padding: 12px 25px; border-radius: 50px;
-            font-weight: bold; box-shadow: 0 0 20px rgba(0,255,136,0.5); z-index: 10002;
-            transition: 0.3s; opacity: 0; pointer-events: none;
+            font-weight: bold; box-shadow: 0 0 20px rgba(0,255,136,0.5); z-index: 10005;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity: 0; pointer-events: none;
         }
         #toast.show { bottom: 30px; opacity: 1; }
 
@@ -21,6 +22,16 @@
         .icon-btn { background: var(--card); border: 2px solid var(--primary); color: var(--primary); padding: 8px 15px; border-radius: 50px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; height: 45px; }
 
         .container { text-align: center; width: 90%; max-width: 800px; margin-top: 100px; }
+        
+        /* Nút điểm danh nhận quà */
+        .checkin-box { margin: 25px 0; }
+        #checkin-btn { 
+            background: var(--accent); color: #000; border: none; padding: 15px 35px; 
+            border-radius: 50px; font-weight: bold; cursor: pointer; font-size: 1.1em; 
+            box-shadow: 0 0 25px rgba(255,204,0,0.3); transition: 0.3s; 
+        }
+        #checkin-btn:hover { transform: scale(1.08); background: #fff; }
+
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 30px; }
         .nav-card { background: var(--card); border: 1px solid #30363d; padding: 30px; border-radius: 15px; text-decoration: none; color: var(--text); font-weight: bold; transition: 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px; }
         .nav-card:hover { border-color: var(--primary); transform: translateY(-5px); }
@@ -29,7 +40,6 @@
         .modal-box { background: var(--card); padding: 25px; border-radius: 15px; border: 2px solid var(--primary); width: 300px; text-align: center; }
         
         .rank-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #30363d; }
-        .rank-item:last-child { border: none; }
         .rank-pos { color: var(--primary); font-weight: bold; }
 
         #name-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 10001; display: flex; justify-content: center; align-items: center; }
@@ -77,7 +87,12 @@
 
     <div class="container">
         <h1>ÔN THI 8-9</h1>
-        <div style="color: var(--accent); margin-bottom: 20px;">Chào ông, <span id="user-name">...</span>!</div>
+        <div style="color: var(--accent); margin-bottom: 10px;">Chào ông, <span id="user-name">...</span>!</div>
+        
+        <div class="checkin-box">
+            <button id="checkin-btn" onclick="dailyCheckIn()">🎁 NHẬN QUÀ HÀNG NGÀY (+20⭐)</button>
+        </div>
+
         <div class="menu-grid">
             <a href="english quiz.html" class="nav-card"><span>🇬🇧</span><span>ENGLISH 8</span></a>
             <a href="history quiz.html" class="nav-card"><span>📜</span><span>HISTORY 8</span></a>
@@ -87,11 +102,9 @@
     </div>
 
     <script type="module">
-        // 1. Nhúng Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getDatabase, ref, set, onValue, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
 
-        // 2. Cấu hình chìa khóa của ông
         const firebaseConfig = {
             apiKey: "AIzaSyC6-e4i-Bo5nrjV-_KmyLGPrZom07Zzgr0",
             authDomain: "onthihocki.firebaseapp.com",
@@ -105,10 +118,14 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- HỆ THỐNG DỮ LIỆU ---
         let userData = JSON.parse(localStorage.getItem('quan_phap_su_data')) || { points: 0, userName: null, lastCheckIn: null, settings: { theme: 'dark' } };
 
-        // Hàm đẩy điểm lên Cloud
+        window.showToast = function(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message; toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 2000);
+        }
+
         window.syncOnline = function() {
             if (userData.userName) {
                 set(ref(db, 'ranks/' + userData.userName), {
@@ -118,7 +135,20 @@
             }
         }
 
-        // Hàm lấy Bảng xếp hạng online
+        // Logic điểm danh mới (20đ)
+        window.dailyCheckIn = function() {
+            const today = new Date().toLocaleDateString();
+            if (userData.lastCheckIn === today) {
+                window.showToast("🎁 Mai quay lại nhận tiếp nhé!");
+            } else {
+                userData.points += 20;
+                userData.lastCheckIn = today;
+                window.showToast("💰 Chúc mừng! Đã nhận 20đ chuyên cần.");
+                window.updateUI();
+                window.syncOnline();
+            }
+        }
+
         window.loadLeaderboard = function() {
             const rankRef = query(ref(db, 'ranks'), orderByChild('points'), limitToLast(10));
             onValue(rankRef, (snapshot) => {
@@ -126,12 +156,10 @@
                 const rankList = document.getElementById('rank-list');
                 if (!rankList) return;
                 rankList.innerHTML = "";
-                
                 if (data) {
                     const sorted = Object.entries(data)
                         .map(([name, info]) => ({ name, points: info.points }))
                         .sort((a, b) => b.points - a.points);
-
                     sorted.forEach((user, index) => {
                         const item = document.createElement('div');
                         item.className = 'rank-item';
@@ -144,7 +172,6 @@
             });
         }
 
-        // --- ĐIỀU KHIỂN GIAO DIỆN ---
         window.toggleModal = function(id) {
             const m = document.getElementById(id);
             m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
@@ -155,8 +182,8 @@
             const name = document.getElementById('user-name-input').value.trim();
             if (name) { 
                 userData.userName = name; 
-                updateUI(); 
-                syncOnline(); 
+                window.updateUI(); 
+                window.syncOnline(); 
             } else {
                 alert("Nhập tên đã ông ơi!");
             }
@@ -164,7 +191,7 @@
 
         window.applySettings = function() {
             userData.settings.theme = document.getElementById('theme-select').value;
-            updateUI();
+            window.updateUI();
         }
 
         window.resetAccount = function() {
@@ -185,31 +212,9 @@
             localStorage.setItem('quan_phap_su_data', JSON.stringify(userData));
         }
 
-        window.showToast = function(message) {
-            const toast = document.getElementById('toast');
-            toast.innerText = message; toast.classList.add('show');
-            setTimeout(() => { toast.classList.remove('show'); }, 2000);
-        }
+        // Đã gỡ bỏ logic F11 keydown để giữ chức năng mặc định của trình duyệt
 
-        // Bắt phím F11
-        window.addEventListener("keydown", function(event) {
-            if (event.key === "F11") {
-                event.preventDefault();
-                const today = new Date().toLocaleDateString();
-                
-                if (userData.lastCheckIn === today) {
-                    showToast("🎁 Hôm nay nhận 10đ rồi, mai quay lại nhé!");
-                } else {
-                    userData.points += 10;
-                    userData.lastCheckIn = today;
-                    updateUI();
-                    syncOnline(); // Gửi lên Firebase
-                    showToast("💰 Đã cộng 10đ chuyên cần!");
-                }
-            }
-        });
-
-        window.onload = updateUI;
+        window.onload = window.updateUI;
     </script>
 </body>
 </html>
