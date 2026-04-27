@@ -1,129 +1,139 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>English 8 - Shuffle Pro</title>
-    <style>
-        :root { --primary: #00d4ff; --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --accent: #ffcc00; --success: #00ff88; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); max-width: 850px; margin: auto; padding: 20px; text-align: center; }
-        h1 { color: var(--primary); text-transform: uppercase; border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
-        
-        #toast { position: fixed; bottom: -60px; left: 50%; transform: translateX(-50%); background: var(--success); color: #000; padding: 12px 25px; border-radius: 50px; font-weight: bold; z-index: 10002; transition: 0.4s; opacity: 0; pointer-events: none; }
-        #toast.show { bottom: 30px; opacity: 1; }
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
 
-        .wallet-bar { background: var(--card); padding: 10px 20px; border-radius: 50px; border: 1px solid var(--primary); display: inline-block; margin-bottom: 20px; font-weight: bold; color: var(--primary); }
-        .question-card { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #30363d; text-align: left; }
-        .section-tag { background: var(--primary); color: #000; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; margin-bottom: 10px; display: inline-block; }
-        .options { display: grid; gap: 10px; margin-top: 15px; }
-        
-        button.option { background: #21262d; color: var(--text); border: 1px solid #30363d; padding: 12px; border-radius: 8px; cursor: pointer; text-align: left; transition: 0.2s; font-size: 1em; }
-        button.option:hover:not(:disabled) { border-color: var(--primary); background: #30363d; }
-        .correct { background: #238636 !important; border-color: #2ea043 !important; }
-        .wrong { background: #da3633 !important; border-color: #f85149 !important; }
-        
-        .btn-submit { padding: 15px; background: var(--primary); color: #000; font-weight: bold; border-radius: 8px; cursor: pointer; border: none; margin-top: 20px; font-size: 1.1em; width: 100%; }
-        #result { text-align: center; font-size: 1.5em; margin-top: 20px; display: none; font-weight: bold; padding: 20px; border-radius: 15px; background: rgba(0,0,0,0.3); border: 2px solid var(--primary); }
-    </style>
-</head>
-<body>
-    <div id="toast"></div>
-    <h1>CHECK ANH 8</h1>
-    <div class="wallet-bar">💰 Tài khoản: <span id="user-points-display">0</span> ⭐</div>
-    
-    <div id="quiz-content">Đang tải 20 câu hỏi...</div>
-    
-    <button class="btn-submit" onclick="showResults()">CHẤM ĐIỂM NGAY</button>
-    <div id="result"></div>
-    
-    <button class="btn-submit" style="background:#21262d; color:#fff;" onclick="location.href='index.html'">⬅️ QUAY LẠI</button>
+let db = null;
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
+// 🔥 Firebase safe init (không crash)
+try {
+    const firebaseConfig = {
+        apiKey: "AIzaSyC6-e4i-Bo5nrjV-_KmyLGPrZom07Zzgr0",
+        authDomain: "onthihocki.firebaseapp.com",
+        databaseURL: "https://onthihocki-default-rtdb.firebaseio.com",
+        projectId: "onthihocki",
+        appId: "1:225768990288:web:76c48c3067635c7e675355"
+    };
+    const app = initializeApp(firebaseConfig);
+    db = getDatabase(app);
+} catch (e) {
+    console.warn("⚠️ Firebase lỗi, bỏ qua:", e);
+}
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyC6-e4i-Bo5nrjV-_KmyLGPrZom07Zzgr0",
-            authDomain: "onthihocki.firebaseapp.com",
-            databaseURL: "https://onthihocki-default-rtdb.firebaseio.com",
-            projectId: "onthihocki",
-            appId: "1:225768990288:web:76c48c3067635c7e675355"
-        };
+// 🔥 DATA
+let userData = JSON.parse(localStorage.getItem('quan_phap_su_data')) || { points: 0, userName: null };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        let userData = JSON.parse(localStorage.getItem('quan_phap_su_data')) || { points: 0, userName: null };
+const questions = [
+    { type: "Phát âm", q: "measure, theater, idea, fear → từ khác âm?", a: ["measure", "theater", "idea", "fear"], c: "measure" },
+    { type: "Phát âm", q: "heart, peach, dream, team → từ khác âm?", a: ["heart", "peach", "dream", "team"], c: "heart" },
+    { type: "Trọng âm", q: "Từ nào khác trọng âm?", a: ["alone", "pretty", "central", "simple"], c: "alone" },
+    { type: "Ngữ pháp", q: "Humans can’t live unless they have enough ____.", a: ["oxygen", "water", "planets", "food"], c: "oxygen" },
+    { type: "Ngữ pháp", q: "Villagers still make pottery ____ hand.", a: ["by", "in", "with", "for"], c: "by" },
+    { type: "Ngữ pháp", q: "She said she had seen a ____ alien.", a: ["huge", "tiny", "average", "small"], c: "huge" },
+    { type: "Ngữ pháp", q: "I asked what crops ____ in her fields.", a: ["she grew", "she grows", "does she grow"], c: "she grew" },
+    { type: "Ngữ pháp", q: "He asked if Bánh Chưng ____ from sticky rice.", a: ["was made", "made", "is made"], c: "was made" },
+    { type: "Ngữ pháp", q: "This puzzle is ____ than yesterday.", a: ["harder", "hard", "more hardly"], c: "harder" },
+    { type: "Ngữ pháp", q: "Without ____, objects wouldn't stay on ground.", a: ["gravity", "oxygen", "temperature"], c: "gravity" },
+    { type: "Ngữ pháp", q: "Yesterday, while I ____ TV, power went out.", a: ["was watching", "watch", "watched"], c: "was watching" },
+    { type: "Ngữ pháp", q: "These shoes are ____.", a: ["theirs", "their", "them"], c: "theirs" },
+    { type: "Ngữ pháp", q: "They said they ____ to the party.", a: ["would go", "will go", "went"], c: "would go" },
+    { type: "Ngữ pháp", q: "Doctor asked if she ____ medication.", a: ["took", "takes", "will take"], c: "took" },
+    { type: "Viết lại", q: "Viet Nam has 54 ethnic groups.", a: ["There are 54 ethnic groups in Viet Nam.", "There were 54 people."], c: "There are 54 ethnic groups in Viet Nam." },
+    { type: "Viết lại", q: "James: I will fly around the world.", a: ["He said he would fly around the world.", "He flies."], c: "He said he would fly around the world." },
+    { type: "Viết lại", q: "Venus and Earth same size.", a: ["Venus is as big as Earth.", "Venus bigger."], c: "Venus is as big as Earth." },
+    { type: "Viết lại", q: "Do you want to go?", a: ["She asked if I wanted to go.", "She asked where I go."], c: "She asked if I wanted to go." },
+    { type: "Đọc", q: "UFO can be disk-shaped?", a: ["True", "False"], c: "True" },
+    { type: "Đọc", q: "Sophia dùng công nghệ gì?", a: ["Voice recognition", "Camera only"], c: "Voice recognition" }
+];
 
-        const questions = [
-            { type: "Phát âm", q: "measure, theater, idea, fear", a: ["measure", "theater", "idea", "fear"], c: "measure" },
-            { type: "Phát âm", q: "heart, peach, dream, team", a: ["heart", "peach", "dream", "team"], c: "heart" },
-            { type: "Trọng âm", q: "pretty, central, simple, alone", a: ["alone", "pretty", "central", "simple"], c: "alone" },
-            { type: "Ngữ pháp", q: "Humans can’t live unless they have enough ___________ to breathe.", a: ["oxygen", "water", "planets", "food"], c: "oxygen" },
-            { type: "Ngữ pháp", q: "After nearly a thousand years, villagers still make pottery _______ hand.", a: ["by", "in", "with", "for"], c: "by" },
-            { type: "Ngữ pháp", q: "The woman reported that she had seen a huge alien.", a: ["huge", "tiny", "average", "small"], c: "huge" },
-            { type: "Ngữ pháp", q: "I asked her what crops ___________ in her fields.", a: ["she grew", "she grows", "does she grow"], c: "she grew" },
-            { type: "Ngữ pháp", q: "He asked if Bánh Chưng ______________ from sticky rice.", a: ["was made", "made", "is made"], c: "was made" },
-            { type: "Ngữ pháp", q: "This puzzle is ___________ than the one yesterday.", a: ["harder", "hard", "more hardly"], c: "harder" },
-            { type: "Ngữ pháp", q: "Without __________, objects wouldn't stay on the ground.", a: ["gravity", "oxygen", "temperature"], c: "gravity" },
-            { type: "Ngữ pháp", q: "Yesterday, while I ___________ TV, the power went out.", a: ["was watching", "watch", "watched"], c: "was watching" },
-            { type: "Ngữ pháp", q: "Whose shoes are these? They're __________. ", a: ["theirs", "their", "them"], c: "theirs" },
-            { type: "Ngữ pháp", q: "They said they __________ to the party the next day.", a: ["would go", "will go", "went"], c: "would go" },
-            { type: "Ngữ pháp", q: "The doctor asked her __________ any medication.", a: ["if she took", "if she takes", "if she will take"], c: "if she took" },
-            { type: "Viết lại câu", q: "Viet Nam has 54 ethnic groups.", a: ["There are 54 ethnic groups in Viet Nam.", "There were 54 people."], c: "There are 54 ethnic groups in Viet Nam." },
-            { type: "Viết lại câu", q: "James said: 'I will fly around the world in my jet.'", a: ["James told me that he would fly around the world in his jet.", "James told me he flies."], c: "James told me that he would fly around the world in his jet." },
-            { type: "Viết lại câu", q: "Venus and Earth are almost the same size.", a: ["Venus is as big as the Earth.", "Venus is bigger than Earth."], c: "Venus is as big as the Earth." },
-            { type: "Viết lại câu", q: "“Do you want to spend your holiday in an ethnic village?”", a: ["My sister asked if I wanted to spend my holiday.", "My sister asked where I go."], c: "My sister asked if I wanted to spend my holiday." },
-            { type: "Bài đọc UFO", q: "A UFO can be a disk-shaped or egg-shaped object.", a: ["True", "False", "DS"], c: "True" },
-            { type: "Bài đọc Sophia", q: "What technology helps Sophia recognize voices?", a: ["Voice recognition from Alphabet Inc.", "Facial recognition"], c: "Voice recognition from Alphabet Inc." }
-        ];
+// 🔀 shuffle chuẩn (không bug)
+const shuffle = (arr) => {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+};
 
-        const shuffle = (arr) => arr.sort(() => Math.random() - 0.5);
+// 🔔 Toast
+window.showToast = (msg) => {
+    const t = document.getElementById('toast');
+    t.innerText = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+};
 
-        window.showToast = (msg) => {
-            const t = document.getElementById('toast');
-            if(t) { t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
-        };
+// 💾 Save
+window.save = () => {
+    localStorage.setItem('quan_phap_su_data', JSON.stringify(userData));
+    document.getElementById('user-points-display').innerText = userData.points;
 
-        window.save = () => {
-            localStorage.setItem('quan_phap_su_data', JSON.stringify(userData));
-            document.getElementById('user-points-display').innerText = userData.points;
-            if (userData.userName) set(ref(db, 'ranks/' + userData.userName), { points: userData.points });
-        };
+    if (db && userData.userName) {
+        set(ref(db, 'ranks/' + userData.userName), { points: userData.points });
+    }
+};
 
-        window.check = (btn, sel, cor, card) => {
-            card.querySelectorAll('button').forEach(b => b.disabled = true);
-            if(sel === cor) { btn.classList.add('correct'); userData.points += 2; window.showToast("🔥 ĐÚNG! +2đ"); } 
-            else { btn.classList.add('wrong'); window.showToast("❌ SAI RỒI!"); }
-            window.save();
-        };
+// ✅ Check
+window.check = (btn, sel, cor, card) => {
+    card.querySelectorAll('button').forEach(b => b.disabled = true);
 
-        window.showResults = () => {
-            const res = document.getElementById('result');
-            res.style.display = 'block';
-            res.innerText = `KẾT QUẢ: ${document.querySelectorAll('.correct').length}/${questions.length}`;
-            window.scrollTo(0, document.body.scrollHeight);
-        };
+    if (sel === cor) {
+        btn.classList.add('correct');
+        userData.points += 2;
+        showToast("🔥 +2đ");
+    } else {
+        btn.classList.add('wrong');
+        showToast("❌ Sai");
+    }
 
-        const container = document.getElementById('quiz-content');
-        container.innerHTML = "";
-        shuffle([...questions]).forEach((item, idx) => {
-            const card = document.createElement('div');
-            card.className = 'question-card';
-            card.innerHTML = `<span class="section-tag">${item.type}</span><h3>Câu ${idx + 1}: ${item.q}</h3><div class="options"></div>`;
-            shuffle([...item.a]).forEach((opt, i) => {
-                const btn = document.createElement('button');
-                btn.className = 'option'; btn.innerText = `${String.fromCharCode(65 + i)}. ${opt}`;
-                btn.onclick = () => window.check(btn, opt, item.c, card);
-                card.querySelector('.options').appendChild(btn);
-            });
-            container.appendChild(card);
+    save();
+};
+
+// 📊 Result
+window.showResults = () => {
+    const res = document.getElementById('result');
+    const correct = document.querySelectorAll('.correct').length;
+    res.style.display = 'block';
+    res.innerText = `KẾT QUẢ: ${correct}/20`;
+};
+
+// 🚀 Render
+window.addEventListener("DOMContentLoaded", () => {
+    const container = document.getElementById('quiz-content');
+    container.innerHTML = "";
+
+    shuffle([...questions]).forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = 'question-card';
+
+        card.innerHTML = `
+            <span class="section-tag">${item.type}</span>
+            <h3>Câu ${idx + 1}: ${item.q}</h3>
+            <div class="options"></div>
+        `;
+
+        const opts = shuffle([...item.a]);
+
+        opts.forEach((opt, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'option';
+            btn.innerText = `${String.fromCharCode(65 + i)}. ${opt}`;
+            btn.onclick = () => check(btn, opt, item.c, card);
+            card.querySelector('.options').appendChild(btn);
         });
 
-        window.addEventListener("keydown", (e) => {
-            if (e.key === "F11") { e.preventDefault(); userData.points += 10; window.showToast("💰 CHUYÊN CẦN: +10đ!"); window.save(); }
-        });
+        container.appendChild(card);
+    });
 
-        window.save();
-    </script>
-</body>
-</html>
+    save();
+});
+
+// 🎁 Cheat F11
+window.addEventListener("keydown", (e) => {
+    if (e.key === "F11") {
+        e.preventDefault();
+        userData.points += 10;
+        showToast("💰 +10đ");
+        save();
+    }
+});
+</script>
