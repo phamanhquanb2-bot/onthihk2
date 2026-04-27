@@ -105,7 +105,7 @@
             }
         }
 
-        window.initQuiz = function() {
+        function initQuiz() {
             const container = document.getElementById('quiz-content');
             container.innerHTML = "";
             const selected = shuffle([...questions]).slice(0, 15);
@@ -171,7 +171,7 @@
             document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && !isFinished) triggerPunishment("Thoát F11"); });
         }
 
-        window.showResults = function() {
+        function showResults() {
             isFinished = true; if (document.fullscreenElement) document.exitFullscreen();
             const res = document.getElementById('result');
             const score = document.querySelectorAll('.correct').length;
@@ -185,6 +185,9 @@
             window.scrollTo(0, document.body.scrollHeight);
         }
         
+        // CÁC DÒNG THÊM MỚI ĐỂ FIX LỖI "BẢNG BAY"
+        window.showToast = showToast;
+        window.showResults = showResults;
         window.onload = initQuiz;
     </script>
 </body>
