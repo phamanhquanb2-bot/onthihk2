@@ -100,7 +100,7 @@
             }
         }
 
-        window.initQuiz = function() {
+        function initQuiz() {
             const container = document.getElementById('quiz-container'); container.innerHTML = "";
             const currentQuestions = shuffle([...rawData]).slice(0, 15);
             currentQuestions.forEach((item, idx) => {
@@ -161,18 +161,21 @@
             document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && !isFinished) triggerPunishment("Thoát F11"); });
         }
 
-        window.showResults = function() {
+        function showResults() {
             isFinished = true; if (document.fullscreenElement) document.exitFullscreen();
             const res = document.getElementById('result');
             const score = document.querySelectorAll('.correct').length;
             const total = 15;
-            let msg = score > 10 ? "Quá giỏi! 🏆" : "Cần cố gắng thêm! 💪";
+            let msg = score > 10 ? "Quá giỏi! Nắm chắc kiến thức Vật Lý rồi đấy! 🏆" : "Cần cố gắng thêm! 💪";
             res.style.display = 'block'; res.style.color = score > 10 ? "#00ff88" : "#da3633";
             res.style.border = `2px solid ${res.style.color}`;
             res.innerText = `KẾT QUẢ: ${score}/${total}. ${msg}`;
             window.scrollTo(0, document.body.scrollHeight);
         }
         
+        // CÁC DÒNG THÊM MỚI ĐỂ FIX LỖI "BẢNG BAY"
+        window.showToast = showToast;
+        window.showResults = showResults;
         window.onload = initQuiz;
     </script>
 </body>
