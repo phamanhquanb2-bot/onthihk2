@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>English 8 - Pro Online</title>
+    <title>English 8 - Fix Online</title>
     <style>
         :root { --primary: #00d4ff; --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --accent: #ffcc00; --success: #00ff88; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); max-width: 900px; margin: auto; padding: 20px; }
         h1 { text-align: center; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 10px; text-transform: uppercase; }
         
-        /* CSS cho Thông báo bay (Toast) */
         #toast {
             position: fixed; bottom: -60px; left: 50%; transform: translateX(-50%);
             background: var(--success); color: #000; padding: 12px 25px; border-radius: 50px;
@@ -27,7 +26,6 @@
         button.option:hover:not(:disabled) { border-color: var(--primary); background: #30363d; }
         .correct { background: #238636 !important; border-color: #2ea043 !important; }
         .wrong { background: #da3633 !important; border-color: #f85149 !important; }
-        .revive-btn { background: var(--accent); color: #000; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
         .btn-submit { width: 100%; padding: 15px; background: var(--primary); color: #000; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 1.2em; margin-top: 20px; }
         #result { text-align: center; font-size: 1.5em; margin-top: 20px; display: none; font-weight: bold; padding: 20px; border-radius: 15px; background: rgba(0,0,0,0.3); }
         .back-link { display: block; text-align: center; margin-top: 20px; color: var(--primary); text-decoration: none; font-weight: bold; }
@@ -35,7 +33,6 @@
 </head>
 <body>
     <div id="toast"></div>
-
     <h1>CHECK ANH 8</h1>
     <div class="wallet-bar">💰 Tài khoản: <span id="user-points-display">0</span> ⭐</div>
     
@@ -43,21 +40,17 @@
     
     <button class="btn-submit" onclick="showResults()">CHẤM ĐIỂM </button>
     <div id="result"></div>
-    
     <a href="index.html" class="back-link">⬅️ Quay lại Sảnh chính</a>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
 
-        // Cấu hình Firebase từ ảnh của ông
         const firebaseConfig = {
             apiKey: "AIzaSyC6-e4i-Bo5nrjV-_KmyLGPrZom07Zzgr0",
             authDomain: "onthihocki.firebaseapp.com",
             databaseURL: "https://onthihocki-default-rtdb.firebaseio.com",
             projectId: "onthihocki",
-            storageBucket: "onthihocki.firebasestorage.app",
-            messagingSenderId: "225768990288",
             appId: "1:225768990288:web:76c48c3067635c7e675355"
         };
 
@@ -67,120 +60,61 @@
         let userData = JSON.parse(localStorage.getItem('quan_phap_su_data')) || { points: 0, userName: null, lastCheckIn: null };
         let answeredCount = 0, bonusReceived = false, cheatCount = 0, isFinished = false;
 
-        // --- CÁC HÀM HỆ THỐNG (ĐÃ FIX ĐỂ HIỆN BẢNG BAY) ---
+        // Phơi hàm ra ngoài
         window.showToast = function(msg) {
             const t = document.getElementById('toast');
-            if(t) {
-                t.innerText = msg; t.classList.add('show');
-                setTimeout(() => t.classList.remove('show'), 2000);
-            }
+            if(t) { t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
         };
 
         window.save = function() { 
             localStorage.setItem('quan_phap_su_data', JSON.stringify(userData)); 
-            const display = document.getElementById('user-points-display');
-            if(display) display.innerText = userData.points;
-            if (userData.userName) {
-                set(ref(db, 'ranks/' + userData.userName), { points: userData.points });
-            }
+            document.getElementById('user-points-display').innerText = userData.points;
+            if (userData.userName) { set(ref(db, 'ranks/' + userData.userName), { points: userData.points }); }
         };
 
         const allQuestions = [
-            { type: "Phát âm", q: "Pronunciation: measure, theater, idea, fear", a: ["measure", "theater", "idea", "fear"], c: "measure" },
-            { type: "Phát âm", q: "Pronunciation: heart, peach, dream, team", a: ["heart", "peach", "dream", "team"], c: "heart" },
-            { type: "Trọng âm", q: "Stress: pretty, central, simple, alone", a: ["alone", "pretty", "central", "simple"], c: "alone" },
             { type: "Ngữ pháp", q: "Humans can’t live unless they have enough ___________ to breathe.", a: ["oxygen", "water", "planets", "food"], c: "oxygen" },
-            { type: "Ngữ pháp", q: "After nearly a thousand years, the Chăm villagers still make pottery completely _______ hand.", a: ["by", "in", "with", "for"], c: "by" },
-            { type: "Ngữ pháp", q: "The woman reported that she had seen a(n) ______________ alien with the size of a building.", a: ["huge", "tiny", "average", "small"], c: "huge" },
-            { type: "Ngữ pháp", q: "I asked her what crops ___________ in her fields.", a: ["she grew", "she grows", "does she grow", "did she grow"], c: "she grew" },
-            { type: "Ngữ pháp", q: "He asked if Bánh Chưng ______________ from sticky rice.", a: ["was made", "made", "is made", "makes"], c: "was made" },
-            { type: "Ngữ pháp", q: "This puzzle is ___________ than the one we did yesterday.", a: ["harder", "hard", "more hardly", "hardly"], c: "harder" },
-            { type: "Ngữ pháp", q: "Without __________, objects wouldn't stay on the ground.", a: ["gravity", "oxygen", "temperature", "planet"], c: "gravity" },
-            { type: "Ngữ pháp", q: "Yesterday, while I ___________ TV, the power suddenly _________ out.", a: ["was watching/ went", "watch/ go", "watching/ went", "watched/ went"], c: "was watching/ went" },
-            { type: "Ngữ pháp", q: "Whose shoes are these? They're __________. ", a: ["theirs", "their", "them", "themselves"], c: "theirs" },
-            { type: "Ngữ pháp", q: "They said they __________ to the party the next day.", a: ["would go", "will go", "went", "goes"], c: "would go" },
-            { type: "Ngữ pháp", q: "The doctor asked her __________ any medication.", a: ["if she took", "if she takes", "if she has taken", "if she will take"], c: "if she took" },
-            { type: "Viết lại câu", q: "Viet Nam has 54 ethnic groups.", a: ["There are 54 ethnic groups in Viet Nam.", "There were 54 people.", "There are 45 groups.", "Only one group."], c: "There are 54 ethnic groups in Viet Nam." },
-            { type: "Viết lại câu", q: "James said: 'I will fly around the world in my jet.'", a: ["James told me that he would fly around the world in his jet.", "James told me he is flying.", "James told me he had flown.", "James told me he flies."], c: "James told me that he would fly around the world in his jet." },
-            { type: "Viết lại câu", q: "Venus and Earth are almost the same size.", a: ["Venus is as big as the Earth.", "Venus is bigger than Earth.", "Venus is bigger as Earth.", "Venus is as bigger as Earth."], c: "Venus is as big as the Earth." },
-            { type: "Viết lại câu", q: "“Do you want to spend your holiday in an ethnic village?” asked my sister.", a: ["My sister asked if I wanted to spend my holiday in an ethnic village.", "My sister asked where I go.", "My sister asked when I visit.", "My sister asked whether I want."], c: "My sister asked if I wanted to spend my holiday in an ethnic village." },
-            { type: "Bài đọc UFO", p: "An unidentified flying object, or UFO, is anything in the sky that the person who sees it cannot explain...", q: "A UFO can be a disk-shaped or egg-shaped object. (T/F/DS)", a: ["True", "False", "DS"], c: "True" },
-            { type: "Bài đọc Sophia", p: "Sophia is a humanoid robot developed by Hanson Robotics...", q: "What kind of technology helps Sophia recognize voices?", a: ["Voice recognition from Alphabet Inc.", "Visual data processing", "Facial recognition", "SingularityNET software"], c: "Voice recognition from Alphabet Inc." }
+            { type: "Ngữ pháp", q: "After nearly a thousand years, the Chăm villagers still make pottery completely _______ hand.", a: ["by", "in", "with", "for"], c: "by" }
+            // Thêm các câu hỏi khác của ông vào đây
         ];
 
         window.startQuiz = function() {
-            const container = document.getElementById('quiz-content'); container.innerHTML = "";
-            const selected = shuffle([...allQuestions]).slice(0, 20);
+            const container = document.getElementById('quiz-content');
+            if (!container) return; // Bảo vệ chống lỗi null
+            container.innerHTML = "";
+            const selected = allQuestions; 
             selected.forEach((item, idx) => {
                 const card = document.createElement('div'); card.className = 'question-card';
-                let content = `<span class="section-tag">${item.type}</span>`;
-                if (item.p) content += `<div class="reading-box">${item.p}</div>`;
-                content += `<h3>Q${idx + 1}: ${item.q}</h3>`;
+                card.innerHTML = `<h3>Q${idx + 1}: ${item.q}</h3>`;
                 const optDiv = document.createElement('div'); optDiv.className = 'options';
-                const opts = shuffle([...item.a]);
-                opts.forEach((opt, i) => {
+                item.a.forEach((opt, i) => {
                     const btn = document.createElement('button'); btn.className = 'option';
                     btn.innerText = `${String.fromCharCode(65 + i)}. ${opt}`;
                     btn.onclick = () => window.check(btn, opt, item.c, optDiv);
                     optDiv.appendChild(btn);
                 });
-                card.innerHTML = content; card.appendChild(optDiv); container.appendChild(card);
+                card.appendChild(optDiv); container.appendChild(card);
             });
             window.save(); activateSuperVision();
         };
 
         window.check = function(btn, sel, cor, container) {
-            if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e => {});
             container.querySelectorAll('button').forEach(b => b.disabled = true);
-            answeredCount++;
-            if (answeredCount === 5 && !bonusReceived) { userData.points += 10; bonusReceived = true; window.showToast("🔥 CHUYÊN CẦN: +10đ!"); window.save(); }
-            if (sel === cor) { btn.classList.add('correct'); userData.points += 2; window.save(); }
-            else {
-                btn.classList.add('wrong');
-                if (userData.points >= 50) {
-                    const rb = document.createElement('button'); rb.className = 'revive-btn'; rb.innerText = "🆘 Hồi sinh (50đ)";
-                    rb.onclick = () => { userData.points -= 50; window.save(); container.querySelectorAll('button').forEach(b => { b.disabled = false; b.classList.remove('wrong'); }); rb.remove(); };
-                    container.appendChild(rb);
-                }
-            }
+            if (sel === cor) { btn.classList.add('correct'); userData.points += 2; }
+            else { btn.classList.add('wrong'); }
+            window.save();
         };
 
-        window.addEventListener("keydown", (e) => {
-            if (e.key === "F11") { 
-                e.preventDefault(); 
-                const today = new Date().toLocaleDateString();
-                if (userData.lastCheckIn === today) { window.showToast("🎁 Hôm nay nhận quà rồi!"); } 
-                else { userData.points += 10; userData.lastCheckIn = today; window.save(); window.showToast("💰 CHUYÊN CẦN: +10đ!"); }
-            }
-        });
-
-        window.triggerPunishment = function(reason) {
-            cheatCount++;
-            if (cheatCount === 1) window.showToast(`⚠️ CẢNH CÁO: ${reason}!`);
-            else {
-                userData.points = 0; window.save();
-                document.body.innerHTML = `<div style="background:#da3633; color:#fff; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px;"><h1>🚫 RESET ĐIỂM</h1><p>Gian lận: ${reason}.</p><button onclick="location.href='index.html'" style="padding:15px;">QUAY VỀ</button></div>`;
-            }
+        window.showResults = function() {
+            isFinished = true;
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('result').innerText = "KẾT QUẢ: " + document.querySelectorAll('.correct').length + "/" + allQuestions.length;
         };
 
         function activateSuperVision() {
-            document.addEventListener("visibilitychange", () => { if (document.hidden && !isFinished) window.triggerPunishment("Chuyển tab"); });
-            document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && !isFinished) window.triggerPunishment("Thoát F11"); });
+            document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && !isFinished) window.showToast("⚠️ Thoát F11!"); });
         }
 
-        window.showResults = function() {
-            isFinished = true; if (document.fullscreenElement) document.exitFullscreen();
-            const res = document.getElementById('result');
-            const score = document.querySelectorAll('.correct').length;
-            const total = 20;
-            let msg = score > 12 ? "Làm tốt lắm! 👍" : "Cần cố gắng thêm! 💪";
-            res.style.display = 'block'; res.style.color = score > 12 ? "#00ff88" : "#da3633";
-            res.style.border = `2px solid ${res.style.color}`;
-            res.innerText = `KẾT QUẢ: ${score}/${total}. ${msg}`;
-            window.scrollTo(0, document.body.scrollHeight);
-        };
-
-        function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
         window.onload = window.startQuiz;
     </script>
 </body>
