@@ -6,7 +6,14 @@
     <title>English 8 - Master Edition</title>
     <style>
         :root { --primary: #00d4ff; --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --accent: #ffcc00; --success: #00ff88; --danger: #ff4444; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); max-width: 850px; margin: auto; padding: 20px; text-align: center; }
+        
+        /* [FIX 1] CHẶN BÔI ĐEN TOÀN TRANG */
+        body { 
+            font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); 
+            max-width: 850px; margin: auto; padding: 20px; text-align: center;
+            -webkit-user-select: none; -ms-user-select: none; user-select: none;
+        }
+
         h1 { color: var(--primary); text-transform: uppercase; border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
         #toast { position: fixed; bottom: -60px; left: 50%; transform: translateX(-50%); background: var(--success); color: #000; padding: 12px 25px; border-radius: 50px; font-weight: bold; z-index: 10002; transition: 0.4s; opacity: 0; pointer-events: none; }
         #toast.show { bottom: 30px; opacity: 1; }
@@ -29,7 +36,8 @@
     <div id="quiz-content">Đang triệu hồi pháp thuật...</div>
     <button class="btn-submit" onclick="showResults()">CHẤM ĐIỂM NGAY</button>
     <div id="result"></div>
-    <button class="btn-submit" style="background:#21262d; color:#fff;" onclick="location.href='index.html'">⬅️ QUAY LẠI</button>
+    
+    <button class="btn-submit" style="background:#21262d; color:#fff;" onclick="window.isExiting=true; location.href='index.html'">⬅️ QUAY LẠI</button>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
@@ -47,7 +55,9 @@
         const db = getDatabase(app);
         let userData = JSON.parse(localStorage.getItem('quan_phap_su_data')) || { points: 0, userName: null, banUntil: null };
 
-        // Kiểm tra lệnh BAN
+        // Biến giấy thông hành thoát trang
+        window.isExiting = false;
+
         if (userData.banUntil && new Date().getTime() < userData.banUntil) {
             alert(`⛔ Ông đang bị cấm thi! Hết hạn sau ít phút nữa.`);
             location.href = "index.html";
@@ -108,6 +118,7 @@
         };
 
         window.showResults = () => {
+            window.isExiting = true; // Cấp giấy khi chấm điểm xong
             const res = document.getElementById('result');
             const correctCount = document.querySelectorAll('.correct').length;
             const total = questions.length;
@@ -135,18 +146,25 @@
             window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
         };
 
-        // --- ANTI CHEAT ---
+        // --- ANTI CHEAT [FIXED LOGIC] ---
         let cheatCount = 0;
         window.applyPenalty = function() {
+            if (window.isExiting) return; // Không phạt khi đang thoát trang hợp lệ
+
             cheatCount++;
             if (cheatCount >= 2) {
-                userData.points = 0; userData.banUntil = new Date().getTime() + (5 * 60 * 1000); window.save();
+                userData.points = 0; userData.banUntil = new Date().getTime() + (5 * 60 * 1000); 
+                window.isExiting = true; // Khóa phạt để load trang chủ
+                window.save();
                 alert("🚫 VI PHẠM QUÁ 2 LẦN! Reset điểm và BAN 5 phút.");
                 location.href = "index.html";
             } else { alert("⚠️ CẢNH BÁO: Không rời trang hoặc dùng phím tắt trái phép!"); }
         };
 
-        document.addEventListener("visibilitychange", () => { if (document.hidden) window.applyPenalty(); });
+        document.addEventListener("visibilitychange", () => { 
+            if (document.hidden && !window.isExiting) window.applyPenalty(); 
+        });
+
         window.addEventListener('keydown', (e) => {
             const forbidden = ['c', 'v', 'u', 's'];
             if (e.key === "F11" || (e.ctrlKey && forbidden.includes(e.key.toLowerCase()))) {
