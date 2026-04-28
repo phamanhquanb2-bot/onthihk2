@@ -102,7 +102,7 @@
             if(sel === cor) { 
                 btn.classList.add('correct'); userData.points += 2; window.showToast("🔥 ĐÚNG! +2đ"); 
             } else { 
-                btn.classList.add('wrong'); window.showToast("❌ SAI RỒI!"); 
+                btn.classList.add('wrong'); userData.points -=2;  window.showToast("❌ SAI RỒI! -2đ"); 
                 if(userData.points >= 100) {
                     const rb = document.createElement('button');
                     rb.className = 'revive-btn'; rb.innerText = "🆘 Hồi sinh (100⭐)";
